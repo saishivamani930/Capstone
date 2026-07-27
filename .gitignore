@@ -1,0 +1,27 @@
+# Python virtual environment
+.venv/
+venv/
+
+# Environment variables
+.env
+.env.*
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Testing
+.pytest_cache/
+.coverage
+
+# IDE
+.vscode/
+.idea/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Generated outputs
+backend/outputs/*
+!backend/outputs/.gitkeep

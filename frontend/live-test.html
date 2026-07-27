@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+    <title>ClinExplain Live Audio Test</title>
+</head>
+
+<body>
+    <h1>ClinExplain Live Audio Test</h1>
+
+    <button id="startButton">Start Recording</button>
+    <button id="stopButton" disabled>Stop Recording</button>
+
+    <h2>Live Transcript</h2>
+    <pre id="partialTranscript">Not recording.</pre>
+
+    <h2>Processing Log</h2>
+
+    <pre id="log"></pre>
+
+    <script>
+        const startButton = document.getElementById("startButton");
+        const stopButton = document.getElementById("stopButton");
+        const log = document.getElementById("log");
+
+        const partialTranscript =
+        document.getElementById("partialTranscript");
+
+        let socket = null;
+        let recorder = null;
+        let microphoneStream = null;
+
+        function writeLog(message) {
+            log.textContent += message + "\n";
+        }
+
+        function stopMicrophone() {
+            if (microphoneStream) {
+                microphoneStream
+                    .getTracks()
+                    .forEach((track) => track.stop());
+
+                microphoneStream = null;
+            }
+        }
+
+        function resetButtons() {
+            startButton.disabled = false;
+            stopButton.disabled = true;
+        }
+
+        startButton.addEventListener("click", async () => {
+            try {
+                log.textContent = "";
+
+                partialTranscript.textContent =
+                    "Listening for speech...";
+                startButton.disabled = true;
+                stopButton.disabled = true;
+
+                microphoneStream =
+                    await navigator.mediaDevices.getUserMedia({
+                        audio: true
+                    });
+
+                socket = new WebSocket(
+                    "ws://127.0.0.1:8000/speech/live"
+                );
+
+                socket.onopen = () => {
+                    const options = {};
+
+                    if (
+                        MediaRecorder.isTypeSupported(
+                            "audio/webm;codecs=opus"
+                        )
+                    ) {
+                        options.mimeType =
+                            "audio/webm;codecs=opus";
+                    }
+
+                    recorder = new MediaRecorder(
+                        microphoneStream,
+                        options
+                    );
+
+                    recorder.ondataavailable = (event) => {
+                        if (
+                            event.data.size > 0 &&
+                            socket.readyState === WebSocket.OPEN
+                        ) {
+                            socket.send(event.data);
+                        }
+                    };
+
+                    recorder.onstop = () => {
+                        writeLog(
+                            "Recording uploaded. Waiting for processing..."
+                        );
+
+                        if (
+                            socket &&
+                            socket.readyState === WebSocket.OPEN
+                        ) {
+                            socket.send("stop");
+                        }
+
+                        stopMicrophone();
+                    };
+
+                    recorder.onerror = (event) => {
+                        writeLog(
+                            "Recorder error: " +
+                            (event.error?.message || "Unknown error")
+                        );
+
+                        stopMicrophone();
+                        resetButtons();
+                    };
+
+                    recorder.start(1000);
+
+                    stopButton.disabled = false;
+
+                    writeLog("Recording started");
+                };
+
+                socket.onmessage = (event) => {
+                    try {
+                        const response = JSON.parse(event.data);
+
+                        if (response.event === "connected") {
+                            writeLog(
+                                "Connected. Session: " +
+                                response.session_id
+                            );
+                        } else if (
+                            response.event === "chunk_received"
+                        ) {
+                            writeLog(
+                                "Chunk " +
+                                response.chunk_number +
+                                " received (" +
+                                response.chunk_size_bytes +
+                                " bytes)"
+                            );
+                            } else if (
+                            response.event === "partial_transcript"
+                        ) {
+                            partialTranscript.textContent =
+                                response.transcript;
+
+                            writeLog(
+                                "Live transcript updated through chunk " +
+                                response.through_chunk
+                            );
+                        } else if (
+                            response.event === "partial_warning"
+                        ) {
+                            writeLog(
+                                "Partial transcript warning: " +
+                                response.message
+                            );
+                        } else if (
+                            response.event === "processing"
+                        ) {
+                            writeLog(
+                                "Processing consultation audio..."
+                            );
+                        } else if (response.event === "completed") {
+                                writeLog("Processing completed.");
+
+                                if (response.result) {
+                                    if (response.result.transcript) {
+                                        partialTranscript.textContent =
+                                            response.result.transcript;
+                                    }
+
+                                    writeLog(
+                                        JSON.stringify(response.result, null, 2)
+                                    );
+                                } else {
+                                    writeLog(
+                                        "No processing result received."
+                                    );
+
+                                    writeLog(
+                                        "Full server response: " +
+                                        JSON.stringify(response, null, 2)
+                                    );
+                                }
+                        }else if (
+                            response.event === "error"
+                        ) {
+                            writeLog(
+                                "Server error: " +
+                                response.message
+                            );
+                        } else {
+                            writeLog(
+                                JSON.stringify(response, null, 2)
+                            );
+                        }
+                    } catch {
+                        writeLog("Server: " + event.data);
+                    }
+                };
+
+                socket.onerror = () => {
+                    writeLog("WebSocket connection error");
+
+                    stopMicrophone();
+                    resetButtons();
+                };
+
+                socket.onclose = () => {
+                    writeLog("Connection closed");
+
+                    stopMicrophone();
+                    resetButtons();
+
+                    socket = null;
+                    recorder = null;
+                };
+
+            } catch (error) {
+                writeLog("Error: " + error.message);
+
+                stopMicrophone();
+                resetButtons();
+            }
+        });
+
+        stopButton.addEventListener("click", () => {
+            stopButton.disabled = true;
+
+            if (
+                recorder &&
+                recorder.state !== "inactive"
+            ) {
+                recorder.stop();
+                writeLog("Recording stopped");
+            } else {
+                writeLog("No active recording found");
+                resetButtons();
+            }
+        });
+    </script>
+</body>
+</html>
