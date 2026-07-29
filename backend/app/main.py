@@ -2,6 +2,7 @@ from fastapi import FastAPI
 
 from app.api.speech import router as speech_router
 from app.api.medical_nlp import router as medical_nlp_router
+from app.api.reasoning import router as reasoning_router
 
 
 app = FastAPI(
@@ -11,6 +12,7 @@ app = FastAPI(
 
 app.include_router(speech_router)
 app.include_router(medical_nlp_router)
+app.include_router(reasoning_router)
 
 
 @app.get("/")
