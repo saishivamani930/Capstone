@@ -2,10 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClinExplain Live Audio Test</title>
 </head>
 
@@ -19,16 +16,13 @@
     <pre id="partialTranscript">Not recording.</pre>
 
     <h2>Processing Log</h2>
-
     <pre id="log"></pre>
 
     <script>
         const startButton = document.getElementById("startButton");
         const stopButton = document.getElementById("stopButton");
         const log = document.getElementById("log");
-
-        const partialTranscript =
-        document.getElementById("partialTranscript");
+        const partialTranscript = document.getElementById("partialTranscript");
 
         let socket = null;
         let recorder = null;
@@ -43,7 +37,6 @@
                 microphoneStream
                     .getTracks()
                     .forEach((track) => track.stop());
-
                 microphoneStream = null;
             }
         }
@@ -56,37 +49,24 @@
         startButton.addEventListener("click", async () => {
             try {
                 log.textContent = "";
-
-                partialTranscript.textContent =
-                    "Listening for speech...";
+                partialTranscript.textContent = "Listening for speech...";
                 startButton.disabled = true;
                 stopButton.disabled = true;
 
-                microphoneStream =
-                    await navigator.mediaDevices.getUserMedia({
-                        audio: true
-                    });
+                microphoneStream = await navigator.mediaDevices.getUserMedia({
+                    audio: true
+                });
 
-                socket = new WebSocket(
-                    "ws://127.0.0.1:8000/speech/live"
-                );
+                socket = new WebSocket("ws://127.0.0.1:8000/speech/live");
 
                 socket.onopen = () => {
                     const options = {};
 
-                    if (
-                        MediaRecorder.isTypeSupported(
-                            "audio/webm;codecs=opus"
-                        )
-                    ) {
-                        options.mimeType =
-                            "audio/webm;codecs=opus";
+                    if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+                        options.mimeType = "audio/webm;codecs=opus";
                     }
 
-                    recorder = new MediaRecorder(
-                        microphoneStream,
-                        options
-                    );
+                    recorder = new MediaRecorder(microphoneStream, options);
 
                     recorder.ondataavailable = (event) => {
                         if (
@@ -98,9 +78,7 @@
                     };
 
                     recorder.onstop = () => {
-                        writeLog(
-                            "Recording uploaded. Waiting for processing..."
-                        );
+                        writeLog("Recording uploaded. Waiting for processing...");
 
                         if (
                             socket &&
@@ -117,15 +95,12 @@
                             "Recorder error: " +
                             (event.error?.message || "Unknown error")
                         );
-
                         stopMicrophone();
                         resetButtons();
                     };
 
                     recorder.start(1000);
-
                     stopButton.disabled = false;
-
                     writeLog("Recording started");
                 };
 
@@ -134,13 +109,8 @@
                         const response = JSON.parse(event.data);
 
                         if (response.event === "connected") {
-                            writeLog(
-                                "Connected. Session: " +
-                                response.session_id
-                            );
-                        } else if (
-                            response.event === "chunk_received"
-                        ) {
+                            writeLog("Connected. Session: " + response.session_id);
+                        } else if (response.event === "chunk_received") {
                             writeLog(
                                 "Chunk " +
                                 response.chunk_number +
@@ -148,62 +118,80 @@
                                 response.chunk_size_bytes +
                                 " bytes)"
                             );
-                            } else if (
-                            response.event === "partial_transcript"
-                        ) {
-                            partialTranscript.textContent =
-                                response.transcript;
-
-                            writeLog(
-                                "Live transcript updated through chunk " +
-                                response.through_chunk
-                            );
-                        } else if (
-                            response.event === "partial_warning"
-                        ) {
-                            writeLog(
-                                "Partial transcript warning: " +
-                                response.message
-                            );
-                        } else if (
-                            response.event === "processing"
-                        ) {
-                            writeLog(
-                                "Processing consultation audio..."
-                            );
+                        } else if (response.event === "partial_transcript") {
+                            partialTranscript.textContent = response.transcript;
+                            writeLog("Live transcript updated through chunk " + response.through_chunk);
+                        } else if (response.event === "partial_warning") {
+                            writeLog("Partial transcript warning: " + response.message);
+                        } else if (response.event === "processing") {
+                            writeLog("Processing consultation audio...");
                         } else if (response.event === "completed") {
-                                writeLog("Processing completed.");
+                            writeLog("--- MEMBER 1 (NLP) COMPLETED ---");
 
-                                if (response.result) {
-                                    if (response.result.transcript) {
-                                        partialTranscript.textContent =
-                                            response.result.transcript;
-                                    }
-
-                                    writeLog(
-                                        JSON.stringify(response.result, null, 2)
-                                    );
-                                } else {
-                                    writeLog(
-                                        "No processing result received."
-                                    );
-
-                                    writeLog(
-                                        "Full server response: " +
-                                        JSON.stringify(response, null, 2)
-                                    );
+                            if (response.result) {
+                                if (response.result.transcript) {
+                                    partialTranscript.textContent = response.result.transcript;
                                 }
-                        }else if (
-                            response.event === "error"
-                        ) {
-                            writeLog(
-                                "Server error: " +
-                                response.message
-                            );
+
+                                writeLog(JSON.stringify(response.result, null, 2));
+
+                                // Extract Member 1 NLP payload safely
+                                const nlpData = response.result.medical_nlp || {};
+                                const rawEntities = nlpData.entities || [];
+                                const rawRelations = nlpData.relations || [];
+
+                                // Map Member 1 schema to Member 2 expected Pydantic schema
+                                const mappedEntities = rawEntities.map((e, idx) => ({
+                                    id: `e_${idx}`,
+                                    text: e.text || e.label,  // Ensures entity text is passed correctly
+                                    category: (e.label === "Sign_symptom" || e.category === "symptom") ? "symptom" : (e.category || "symptom"),
+                                    status: e.assertion || (e.negated ? "absent" : "present")
+                                }));
+
+                                const mappedRelations = rawRelations.map((r, idx) => ({
+                                    id: `r_${idx}`,
+                                    source_id: r.source_id || `e_0`,
+                                    target_id: r.target_id || `e_1`,
+                                    relation_type: r.relation_type || "associated_with"
+                                }));
+
+                                const reasoningPayload = {
+                                    entities: mappedEntities,
+                                    relations: mappedRelations
+                                };
+
+                                writeLog("\n-------------------------------------------");
+                                writeLog("Triggering Member 2 Reasoning Engine...");
+                                writeLog("-------------------------------------------");
+
+                                // Automatically trigger Member 2 REST Endpoint
+                                fetch("http://127.0.0.1:8000/api/reasoning/process?patient_id=patient_001", {
+                                    method: "POST",
+                                    headers: { "Content-Type": "application/json" },
+                                    body: JSON.stringify(reasoningPayload)
+                                })
+                                .then(async (res) => {
+                                    if (!res.ok) {
+                                        const errText = await res.text();
+                                        throw new Error(`Reasoning Error (${res.status}): ${errText}`);
+                                    }
+                                    return res.json();
+                                })
+                                .then((reasoningData) => {
+                                    writeLog("--- MEMBER 2 (REASONING) OUTPUT RECEIVED ---");
+                                    writeLog(JSON.stringify(reasoningData, null, 2));
+                                })
+                                .catch((err) => {
+                                    writeLog("Reasoning execution failed: " + err.message);
+                                });
+
+                            } else {
+                                writeLog("No processing result received.");
+                            }
+                        } else if (response.event === "error") {
+                            writeLog("Server error: " + response.message);
                         } else {
-                            writeLog(
-                                JSON.stringify(response, null, 2)
-                            );
+                            writeLog(JSON.stringify(response, null, 2));
                         }
                     } catch {
                         writeLog("Server: " + event.data);
@@ -212,24 +200,20 @@
 
                 socket.onerror = () => {
                     writeLog("WebSocket connection error");
-
                     stopMicrophone();
                     resetButtons();
                 };
 
                 socket.onclose = () => {
                     writeLog("Connection closed");
-
                     stopMicrophone();
                     resetButtons();
-
                     socket = null;
                     recorder = null;
                 };
 
             } catch (error) {
                 writeLog("Error: " + error.message);
-
                 stopMicrophone();
                 resetButtons();
             }
@@ -238,10 +222,7 @@
         stopButton.addEventListener("click", () => {
             stopButton.disabled = true;
 
-            if (
-                recorder &&
-                recorder.state !== "inactive"
-            ) {
+            if (recorder && recorder.state !== "inactive") {
                 recorder.stop();
                 writeLog("Recording stopped");
             } else {
