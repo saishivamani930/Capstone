@@ -140,13 +140,29 @@
                                 const rawEntities = nlpData.entities || [];
                                 const rawRelations = nlpData.relations || [];
 
-                                // Map Member 1 schema to Member 2 expected Pydantic schema
-                                const mappedEntities = rawEntities.map((e, idx) => ({
-                                    id: `e_${idx}`,
-                                    text: e.text || e.label,  // Ensures entity text is passed correctly
-                                    category: (e.label === "Sign_symptom" || e.category === "symptom") ? "symptom" : (e.category || "symptom"),
-                                    status: e.assertion || (e.negated ? "absent" : "present")
-                                }));
+                                const mappedEntities = rawEntities.map((e, idx) => {
+                                    const rawCategory = (e.label || e.category || "symptom").toLowerCase();
+    
+                                    let category = "symptom";
+                                    if (rawCategory.includes("sign_symptom") || rawCategory === "symptom") {
+                                        category = "symptom";
+                                    } else if (rawCategory.includes("duration") || rawCategory.includes("time")) {
+                                        category = "duration";
+                                    } else if (rawCategory.includes("severity") || rawCategory.includes("modifier")) {
+                                        category = "severity";
+                                    } else if (rawCategory.includes("aggravating") || rawCategory.includes("factor")) {
+                                        category = "aggravating_factor";
+                                    } else {
+                                        category = rawCategory; // Preserve original label if available
+                                    }
+
+                                    return {
+                                        id: `e_${idx}`,
+                                        text: e.text || e.label,
+                                        category: category,
+                                        status: e.assertion || (e.negated ? "absent" : "present")
+                                    };
+                                });
 
                                 const mappedRelations = rawRelations.map((r, idx) => ({
                                     id: `r_${idx}`,
