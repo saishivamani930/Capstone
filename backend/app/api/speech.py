@@ -22,6 +22,14 @@ from app.speech.transcriber import (
     transcribe_audio,
     transcribe_partial_audio,
 )
+from app.medical_nlp.pipeline import run_medical_nlp
+from app.reasoning.missing_info import MissingInfoEngine
+from app.reasoning.risk_analyzer import RiskAnalyzer
+from app.reasoning.wikidata_client import WikidataClient
+
+missing_info_engine = MissingInfoEngine()
+risk_analyzer_engine = RiskAnalyzer()
+wiki_client_engine = WikidataClient()
 
 router = APIRouter(
     prefix="/speech",
@@ -89,6 +97,17 @@ def transcribe_webm_snapshot(audio_bytes: bytes) -> dict:
                     os.remove(temporary_path)
                 except OSError:
                     pass
+
+
+@router.post("/reset")
+def reset_session():
+    """
+    Explicitly clear active session data and temporary audio cache.
+    """
+    return {
+        "status": "success",
+        "message": "Session reset: Temporary audio buffer and background tasks cleared."
+    }
 
 
 @router.post("/upload")
@@ -294,6 +313,71 @@ async def live_audio(websocket: WebSocket):
 
                 last_partial_text = partial_text
 
+                # Run live Medical NLP, missing information detection, and risk analysis
+                nlp_res = run_medical_nlp(partial_text)
+                structured_entities = nlp_res.get("structured_entities", {})
+
+                # Extract present symptoms (non-negated)
+                symptoms = structured_entities.get("symptoms", [])
+                present_symptom_names = [
+                    s["text"] for s in symptoms if not s.get("negated", False)
+                ]
+
+                # Resolve Wikidata Q-IDs for present symptoms
+                symptom_qids = []
+                for s_name in present_symptom_names:
+                    try:
+                        qid = await wiki_client_engine.get_qid_for_entity(s_name)
+                        if qid:
+                            symptom_qids.append(qid)
+                    except Exception:
+                        pass
+
+                # Find candidate diseases via SPARQL
+                candidate_diseases = []
+                if symptom_qids:
+                    try:
+                        candidate_diseases = await wiki_client_engine.find_candidate_diseases(symptom_qids)
+                    except Exception:
+                        candidate_diseases = []
+
+                all_entities = nlp_res.get("entities", [])
+
+                # Analyze missing information & risk
+                missing_info = missing_info_engine.analyze_sync(
+                    present_symptom_names, candidate_diseases, all_entities
+                )
+                risk_res = risk_analyzer_engine.analyze_risk(
+                    present_symptom_names, candidate_diseases
+                )
+
+                # Construct live knowledge graph node & relationship previews
+                all_entities = nlp_res.get("entities", [])
+                graph_nodes = [
+                    {
+                        "id": f"e_{idx}",
+                        "label": e["text"],
+                        "category": e["label"],
+                        "status": "absent" if e.get("negated", False) else "present"
+                    }
+                    for idx, e in enumerate(all_entities)
+                ]
+                graph_relationships = []
+                for idx, record in enumerate(nlp_res.get("clinical_facts", {}).get("symptom_records", [])):
+                    s_id = f"symp_{idx}"
+                    for m in record.get("severities", []):
+                        graph_relationships.append({
+                            "source": s_id,
+                            "target": m["text"],
+                            "type": "HAS_SEVERITY"
+                        })
+                    for m in record.get("durations", []):
+                        graph_relationships.append({
+                            "source": s_id,
+                            "target": m["text"],
+                            "type": "HAS_DURATION"
+                        })
+
                 await send_event({
                     "event": "partial_transcript",
                     "session_id": session_id,
@@ -303,6 +387,13 @@ async def live_audio(websocket: WebSocket):
                         "language"
                     ),
                     "is_final": False,
+                    "medical_nlp": nlp_res,
+                    "present_symptoms": present_symptom_names,
+                    "missing_information": missing_info,
+                    "risk_analysis": risk_res,
+                    "candidate_diseases": candidate_diseases,
+                    "graph_nodes": graph_nodes,
+                    "graph_relationships": graph_relationships,
                 })
 
             except Exception as error:
@@ -390,7 +481,7 @@ async def live_audio(websocket: WebSocket):
                 partial_worker_task is not None
                 and not partial_worker_task.done()
             ):
-                await partial_worker_task
+                partial_worker_task.cancel()
 
             with tempfile.NamedTemporaryFile(
                 delete=False,

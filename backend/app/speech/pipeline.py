@@ -49,6 +49,58 @@ def find_speaker(
     return "UNKNOWN"
 
 
+import re
+
+DOCTOR_QUESTION_PATTERNS = [
+    r"\bdo you have\b",
+    r"\bare you allergic\b",
+    r"\bwhat problem\b",
+    r"\bhow long\b",
+    r"\bany allergy\b",
+    r"\bdo you take\b",
+    r"\bany other symptoms\b",
+]
+
+
+def refine_conversation_turns(conversation: list[dict]) -> list[dict]:
+    refined = []
+
+    for turn in conversation:
+        text = turn["text"]
+        speaker = turn["speaker"]
+
+        if speaker == "PATIENT":
+            doc_pattern = "|".join(DOCTOR_QUESTION_PATTERNS)
+            match = re.search(doc_pattern, text, re.IGNORECASE)
+
+            if match:
+                split_idx = match.start()
+                pre_patient_text = text[:split_idx].strip()
+                post_text = text[split_idx:].strip()
+
+                q_end = post_text.find("?")
+                if q_end != -1:
+                    doc_question = post_text[:q_end + 1].strip()
+                    post_patient_text = post_text[q_end + 1:].strip()
+                else:
+                    # Look for end of sentence if no question mark
+                    sentences = re.split(r"(?<=[.!?])\s+", post_text, maxsplit=1)
+                    doc_question = sentences[0].strip()
+                    post_patient_text = sentences[1].strip() if len(sentences) > 1 else ""
+
+                if pre_patient_text:
+                    refined.append({**turn, "speaker": "PATIENT", "text": pre_patient_text})
+                if doc_question:
+                    refined.append({**turn, "speaker": "DOCTOR", "text": doc_question})
+                if post_patient_text:
+                    refined.append({**turn, "speaker": "PATIENT", "text": post_patient_text})
+                continue
+
+        refined.append(turn)
+
+    return refined
+
+
 def process_conversation(audio_path: str) -> dict:
     transcription = transcribe_audio(audio_path)
     speaker_segments = diarize_audio(audio_path)
@@ -87,17 +139,32 @@ def process_conversation(audio_path: str) -> dict:
             conversation[-1]["end"] = item["end"]
 
     conversation_with_roles = map_speaker_roles(conversation)
+    refined_conversation = refine_conversation_turns(conversation_with_roles)
 
-    patient_text = build_patient_text(conversation_with_roles)
+    patient_text = build_patient_text(refined_conversation)
 
     medical_nlp_result = run_medical_nlp(patient_text)
 
+    # Automatic RAG Guideline Evidence & Claim Verification
+    from app.rag.rag_engine import run_rag_pipeline
+    symptoms = [
+        s["text"] for s in medical_nlp_result.get("structured_entities", {}).get("symptoms", [])
+        if not s.get("negated", False)
+    ]
+    query_text = f"{' '.join(symptoms)} guidelines" if symptoms else "Chest pain & exertional angina guidelines"
+    rag_result = run_rag_pipeline(
+        query_text, 
+        top_k=5, 
+        entities=medical_nlp_result.get("entities", [])
+    )
+
     result = {
-    "transcript": transcription["text"],
-    "language": transcription["language"],
-    "patient_transcript": patient_text,
-    "conversation": conversation_with_roles,
-    "medical_nlp": medical_nlp_result,
+        "transcript": transcription["text"],
+        "language": transcription["language"],
+        "patient_transcript": patient_text,
+        "conversation": refined_conversation,
+        "medical_nlp": medical_nlp_result,
+        "rag_result": rag_result,
     }
 
     validated_result = ConsultationResult.model_validate(result)

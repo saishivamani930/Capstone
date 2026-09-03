@@ -3,900 +3,1176 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClinExplain | Real-Time AI Clinical Consultation Assistant</title>
+    <title>ClinExplain | AI Clinical Assistant & Knowledge Graph Dashboard</title>
+    
+    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        outfit: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#fef2f2',
+                            100: '#fee2e2',
+                            500: '#ef4444',
+                            600: '#dc2626',
+                            700: '#b91c1c',
+                            900: '#7f1d1d',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    
+    <!-- Custom White & Red Styles -->
     <style>
-        :root {
-            --bg-dark: #090D16;
-            --bg-card: rgba(17, 24, 39, 0.75);
-            --bg-card-border: rgba(255, 255, 255, 0.08);
-            --bg-card-hover: rgba(30, 41, 59, 0.85);
-            
-            --primary: #06B6D4;
-            --primary-glow: rgba(6, 182, 212, 0.25);
-            --accent-blue: #3B82F6;
-            
-            --danger: #EF4444;
-            --danger-glow: rgba(239, 68, 68, 0.25);
-            --warning: #F59E0B;
-            --warning-glow: rgba(245, 158, 11, 0.2);
-            --success: #10B981;
-            --success-glow: rgba(16, 185, 129, 0.2);
-            --purple: #8B5CF6;
-            
-            --text-main: #F3F4F6;
-            --text-muted: #9CA3AF;
-            --text-dim: #6B7280;
-            
-            --radius-lg: 16px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
-            
-            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
-
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: var(--bg-dark);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
+            background-color: #FAFAFA;
+            color: #0F172A;
             background-image: 
-                radial-gradient(circle at 15% 15%, rgba(6, 182, 212, 0.08) 0%, transparent 40%),
-                radial-gradient(circle at 85% 85%, rgba(139, 92, 246, 0.08) 0%, transparent 40%);
+                radial-gradient(circle at 10% 10%, rgba(220, 38, 38, 0.04) 0%, transparent 35%),
+                radial-gradient(circle at 90% 90%, rgba(239, 68, 68, 0.04) 0%, transparent 35%);
             background-attachment: fixed;
-            overflow-x: hidden;
         }
 
-        /* Top Navbar Header */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 16px 32px;
-            background: rgba(11, 15, 25, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--bg-card-border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
+        /* Glassmorphism Card Style - White & Clean */
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.01);
         }
 
-        .brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .glass-panel-hover:hover {
+            border-color: rgba(220, 38, 38, 0.3);
+            box-shadow: 0 12px 30px -5px rgba(220, 38, 38, 0.12);
         }
 
-        .brand-logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 10px;
-            background: linear-gradient(135deg, var(--primary), var(--accent-blue));
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Outfit', sans-serif;
-            font-weight: 700;
-            font-size: 22px;
-            color: #fff;
-            box-shadow: 0 0 15px var(--primary-glow);
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 0.8);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(220, 38, 38, 0.25);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(220, 38, 38, 0.5);
         }
 
-        .brand-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: -0.5px;
-            background: linear-gradient(to right, #ffffff, #94A3B8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .brand-tag {
-            font-size: 11px;
-            font-weight: 600;
-            background: rgba(6, 182, 212, 0.15);
-            color: var(--primary);
-            padding: 2px 8px;
-            border-radius: 20px;
-            border: 1px solid rgba(6, 182, 212, 0.3);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .controls {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .status-pill {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            font-weight: 500;
-            padding: 6px 14px;
-            border-radius: 30px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--bg-card-border);
-        }
-
-        .status-dot {
-            width: 8px;
-            height: 8px;
-            border-radius: 50%;
-            background-color: var(--text-dim);
-            transition: var(--transition);
-        }
-
-        .status-pill.recording .status-dot {
-            background-color: var(--danger);
-            box-shadow: 0 0 10px var(--danger);
-            animation: pulse-dot 1.5s infinite;
-        }
-
-        .status-pill.connected .status-dot {
-            background-color: var(--success);
-            box-shadow: 0 0 8px var(--success);
-        }
-
-        @keyframes pulse-dot {
+        /* Pulse Animations */
+        @keyframes pulse-ring {
             0% { transform: scale(0.95); opacity: 0.8; }
-            50% { transform: scale(1.3); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 1; }
             100% { transform: scale(0.95); opacity: 0.8; }
         }
-
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 10px 20px;
-            border-radius: var(--radius-sm);
-            font-weight: 600;
-            font-size: 14px;
-            cursor: pointer;
-            border: none;
-            transition: var(--transition);
-            outline: none;
-        }
-
-        .btn-primary {
-            background: linear-gradient(135deg, var(--primary), var(--accent-blue));
-            color: #fff;
-            box-shadow: 0 4px 14px var(--primary-glow);
-        }
-
-        .btn-primary:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(6, 182, 212, 0.4);
-        }
-
-        .btn-danger {
-            background: linear-gradient(135deg, #EF4444, #DC2626);
-            color: #fff;
-            box-shadow: 0 4px 14px var(--danger-glow);
-        }
-
-        .btn-danger:hover:not(:disabled) {
-            transform: translateY(-1px);
-            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4);
-        }
-
-        .btn:disabled {
-            opacity: 0.4;
-            cursor: not-allowed;
-            transform: none !important;
-            box-shadow: none !important;
-        }
-
-        /* Main Dashboard Grid */
-        main {
-            flex: 1;
-            padding: 24px 32px;
-            display: grid;
-            grid-template-columns: 1.2fr 0.8fr;
-            grid-template-rows: auto 1fr;
-            gap: 24px;
-            max-width: 1700px;
-            margin: 0 auto;
-            width: 100%;
-        }
-
-        /* Card Container Styling */
-        .card {
-            background: var(--bg-card);
-            backdrop-filter: blur(16px);
-            border: 1px solid var(--bg-card-border);
-            border-radius: var(--radius-lg);
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            position: relative;
-            overflow: hidden;
-        }
-
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 16px;
-            padding-bottom: 12px;
-            border-bottom: 1px solid var(--bg-card-border);
-        }
-
-        .card-title {
-            font-family: 'Outfit', sans-serif;
-            font-size: 16px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            color: var(--text-main);
-        }
-
-        .card-title svg {
-            width: 20px;
-            height: 20px;
-            color: var(--primary);
-        }
-
-        /* Top Risk Banner Widget */
-        .risk-banner-card {
-            grid-column: span 2;
-            padding: 16px 24px;
-            background: linear-gradient(135deg, rgba(17, 24, 39, 0.9), rgba(30, 41, 59, 0.7));
-            border-left: 4px solid var(--text-dim);
-            transition: var(--transition);
-        }
-
-        .risk-banner-card.high {
-            border-left-color: var(--danger);
-            background: linear-gradient(135deg, rgba(239, 68, 68, 0.12), rgba(17, 24, 39, 0.85));
-        }
-
-        .risk-banner-card.medium {
-            border-left-color: var(--warning);
-            background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(17, 24, 39, 0.85));
-        }
-
-        .risk-banner-card.low {
-            border-left-color: var(--success);
-            background: linear-gradient(135deg, rgba(16, 185, 129, 0.12), rgba(17, 24, 39, 0.85));
-        }
-
-        .risk-content {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 24px;
-        }
-
-        .risk-badge {
-            font-family: 'Outfit', sans-serif;
-            font-size: 13px;
-            font-weight: 700;
-            padding: 6px 14px;
-            border-radius: 20px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            background: rgba(255, 255, 255, 0.08);
-            color: var(--text-muted);
-        }
-
-        .high .risk-badge { background: var(--danger); color: #fff; box-shadow: 0 0 12px var(--danger-glow); }
-        .medium .risk-badge { background: var(--warning); color: #000; box-shadow: 0 0 12px var(--warning-glow); }
-        .low .risk-badge { background: var(--success); color: #000; box-shadow: 0 0 12px var(--success-glow); }
-
-        .risk-factors {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-muted);
-        }
-
-        .risk-factor-tag {
-            background: rgba(255, 255, 255, 0.06);
-            padding: 4px 10px;
-            border-radius: 6px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        /* Live Speech & Transcript Panel */
-        .transcript-card {
-            grid-row: span 1;
-            min-height: 480px;
-        }
-
-        .transcript-box {
-            flex: 1;
-            background: rgba(9, 13, 22, 0.6);
-            border-radius: var(--radius-md);
-            padding: 16px;
-            overflow-y: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-            max-height: 440px;
-            border: 1px solid rgba(255, 255, 255, 0.04);
-        }
-
-        .chat-turn {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-            max-width: 85%;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .chat-turn.doctor {
-            align-self: flex-end;
-        }
-
-        .chat-turn.patient {
-            align-self: flex-start;
-        }
-
-        .chat-speaker {
-            font-size: 11px;
-            font-weight: 600;
-            color: var(--text-dim);
-            padding: 0 4px;
-        }
-
-        .chat-turn.doctor .chat-speaker { color: var(--primary); align-self: flex-end; }
-        .chat-turn.patient .chat-speaker { color: var(--purple); }
-
-        .chat-bubble {
-            padding: 10px 14px;
-            border-radius: 12px;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-
-        .chat-turn.doctor .chat-bubble {
-            background: linear-gradient(135deg, rgba(6, 182, 212, 0.15), rgba(59, 130, 246, 0.15));
-            border: 1px solid rgba(6, 182, 212, 0.25);
-            color: #E0F2FE;
-            border-bottom-right-radius: 2px;
-        }
-
-        .chat-turn.patient .chat-bubble {
-            background: linear-gradient(135deg, rgba(139, 92, 246, 0.15), rgba(168, 85, 247, 0.15));
-            border: 1px solid rgba(139, 92, 246, 0.25);
-            color: #F3E8FF;
-            border-bottom-left-radius: 2px;
-        }
-
-        .streaming-ticker {
-            padding: 12px 16px;
-            background: rgba(6, 182, 212, 0.06);
-            border-left: 3px solid var(--primary);
-            border-radius: 0 8px 8px 0;
-            font-size: 13.5px;
-            font-style: italic;
-            color: var(--text-muted);
-            margin-top: 10px;
-        }
-
-        /* Right Sidebar Assistant Column */
-        .assistant-col {
-            display: flex;
-            flex-direction: column;
-            gap: 24px;
-        }
-
-        /* Live Suggested Follow-Up Questions (Missing Info) */
-        .questions-card {
-            border: 1px solid rgba(245, 158, 11, 0.3);
-            background: linear-gradient(180deg, rgba(245, 158, 11, 0.05), var(--bg-card));
-        }
-
-        .questions-list {
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-height: 250px;
-            overflow-y: auto;
-        }
-
-        .question-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            background: rgba(15, 23, 42, 0.7);
-            border-radius: var(--radius-sm);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            transition: var(--transition);
-        }
-
-        .question-item:hover {
-            border-color: rgba(245, 158, 11, 0.4);
-            background: rgba(30, 41, 59, 0.9);
-        }
-
-        .question-checkbox {
-            margin-top: 3px;
-            accent-color: var(--warning);
-            width: 16px;
-            height: 16px;
-            cursor: pointer;
-        }
-
-        .question-text {
-            font-size: 13.5px;
-            line-height: 1.4;
-            color: var(--text-main);
-        }
-
-        /* Medical Entities & Knowledge Graph Card */
-        .entities-grid {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            max-height: 200px;
-            overflow-y: auto;
-        }
-
-        .entity-chip {
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            background: rgba(255, 255, 255, 0.05);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-
-        .entity-chip.symptom { background: rgba(239, 68, 68, 0.15); border-color: rgba(239, 68, 68, 0.3); color: #FCA5A5; }
-        .entity-chip.disease { background: rgba(139, 92, 246, 0.15); border-color: rgba(139, 92, 246, 0.3); color: #DDD6FE; }
-        .entity-chip.medication { background: rgba(16, 185, 129, 0.15); border-color: rgba(16, 185, 129, 0.3); color: #A7F3D0; }
-        .entity-chip.duration { background: rgba(245, 158, 11, 0.15); border-color: rgba(245, 158, 11, 0.3); color: #FDE68A; }
-        .entity-chip.negated { opacity: 0.5; text-decoration: line-through; }
-
-        /* Candidate Differential Diseases */
-        .candidates-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .candidate-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px 14px;
-            background: rgba(15, 23, 42, 0.6);
-            border-radius: var(--radius-sm);
-            border: 1px solid var(--bg-card-border);
-        }
-
-        .candidate-name {
-            font-size: 13.5px;
-            font-weight: 600;
-            color: var(--text-main);
-        }
-
-        .candidate-matches {
-            font-size: 11px;
-            font-weight: 600;
-            background: rgba(6, 182, 212, 0.15);
-            color: var(--primary);
-            padding: 2px 8px;
-            border-radius: 10px;
-        }
-
-        /* Collapsible Log Drawer */
-        .log-drawer {
-            grid-column: span 2;
-            margin-top: 12px;
-        }
-
-        .drawer-toggle {
-            background: none;
-            border: none;
-            color: var(--text-dim);
-            font-size: 12px;
-            font-weight: 600;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            margin-bottom: 8px;
-        }
-
-        .log-box {
-            background: rgba(5, 8, 15, 0.9);
-            border-radius: var(--radius-sm);
-            padding: 12px;
-            font-family: 'Consolas', monospace;
-            font-size: 11.5px;
-            color: #34D399;
-            max-height: 140px;
-            overflow-y: auto;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            white-space: pre-wrap;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
+        .pulse-ring {
+            animation: pulse-ring 1.8s infinite ease-in-out;
         }
     </style>
+
+    <!-- React 18 & Babel CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 </head>
-<body>
+<body class="font-sans antialiased selection:bg-red-500 selection:text-white min-h-screen flex flex-col">
 
-    <!-- Header Navigation -->
-    <header>
-        <div class="brand">
-            <div class="brand-logo">C</div>
-            <div>
-                <div style="display: flex; align-items: center; gap: 8px;">
-                    <span class="brand-title">ClinExplain</span>
-                    <span class="brand-tag">AI Clinical Assistant</span>
-                </div>
-            </div>
-        </div>
+    <!-- React Root Container -->
+    <div id="root" class="flex-1 flex flex-col"></div>
 
-        <div class="controls">
-            <div class="status-pill" id="statusPill">
-                <div class="status-dot"></div>
-                <span id="statusText">System Ready</span>
-            </div>
+    <!-- React Application Script -->
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo, useCallback } = React;
 
-            <button id="startButton" class="btn btn-primary">
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
-                Start Consultation
-            </button>
+        // ==========================================
+        // 1. HEADER & CONTROL BAR COMPONENT
+        // ==========================================
+        function Header({ isRecording, isConnected, onStart, onStop, onReset, sessionTag, timerSec }) {
+            const formatTime = (totalSec) => {
+                const mins = Math.floor(totalSec / 60).toString().padStart(2, '0');
+                const secs = (totalSec % 60).toString().padStart(2, '0');
+                return `${mins}:${secs}`;
+            };
 
-            <button id="stopButton" class="btn btn-danger" disabled>
-                <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
-                Stop Recording
-            </button>
-        </div>
-    </header>
+            return (
+                <header class="sticky top-0 z-50 glass-panel border-b border-slate-200 px-6 py-4 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center gap-4">
+                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-red-600 to-rose-600 flex items-center justify-center font-outfit font-extrabold text-2xl text-white shadow-lg shadow-red-500/30">
+                            C
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h1 class="font-outfit font-bold text-xl tracking-tight text-slate-900">ClinExplain</h1>
+                                <span class="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-200 uppercase tracking-wider">
+                                    Explainable AI Assistant
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-500">Real-Time Speech Diarization • Knowledge Graph • WHO Guidelines • SOAP Notes</p>
+                        </div>
+                    </div>
 
-    <main>
-        <!-- Top Cardiology Risk Banner -->
-        <div class="card risk-banner-card" id="riskBanner">
-            <div class="risk-content">
-                <div style="display: flex; align-items: center; gap: 14px;">
-                    <div class="risk-badge" id="riskBadge">LOW RISK</div>
-                    <div>
-                        <div style="font-size: 14px; font-weight: 600; color: var(--text-main);" id="riskTitle">Cardiology Risk Evaluation</div>
-                        <div style="font-size: 12px; color: var(--text-dim);" id="riskScoreText">Score: 0.20 (Standard Consultation)</div>
+                    <div class="flex items-center gap-3">
+                        {/* Live Recording Status Badge */}
+                        <div class="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-100 border border-slate-200 text-xs font-medium">
+                            <span class={`w-2.5 h-2.5 rounded-full ${
+                                isRecording ? 'bg-red-600 pulse-ring shadow-lg shadow-red-500/50' : 
+                                isConnected ? 'bg-emerald-500 shadow-md shadow-emerald-500/40' : 'bg-slate-400'
+                            }`}></span>
+                            <span class="text-slate-700">
+                                {isRecording ? `Recording Live (${formatTime(timerSec)})` : isConnected ? 'Ready for Consultation' : 'Idle'}
+                            </span>
+                        </div>
+
+                        {/* Clear / New Patient Button */}
+                        <button 
+                            onClick={onReset}
+                            title="Clear previous patient data and start fresh session"
+                            class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl font-semibold text-xs text-slate-700 bg-slate-100 hover:bg-red-50 hover:text-red-700 border border-slate-200 hover:border-red-200 transition-all cursor-pointer"
+                        >
+                            🔄 New Patient
+                        </button>
+
+                        {/* Action Buttons */}
+                        {!isRecording ? (
+                            <button 
+                                onClick={onStart}
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-gradient-to-r from-red-600 to-rose-600 hover:from-red-500 hover:to-rose-500 shadow-lg shadow-red-500/25 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><line x1="12" y1="19" x2="12" y2="22"/></svg>
+                                Start Consultation
+                            </button>
+                        ) : (
+                            <button 
+                                onClick={onStop}
+                                class="flex items-center gap-2 px-5 py-2.5 rounded-xl font-semibold text-sm text-white bg-slate-900 hover:bg-slate-800 shadow-lg shadow-slate-900/20 transition-all transform hover:-translate-y-0.5 active:translate-y-0"
+                            >
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2"/></svg>
+                                Stop Recording
+                            </button>
+                        )}
+                    </div>
+                </header>
+            );
+        }
+
+        // ==========================================
+        // 2. CARDIOLOGY RISK BANNER COMPONENT
+        // ==========================================
+        function CardiologyRiskBanner({ riskAnalysis }) {
+            const riskLevel = (riskAnalysis?.risk_level || 'LOW').toUpperCase();
+            const riskScore = riskAnalysis?.risk_score || 0.2;
+            const flaggedFactors = riskAnalysis?.flagged_factors || [];
+
+            const isHigh = riskLevel === 'HIGH';
+            const isMedium = riskLevel === 'MEDIUM';
+
+            const borderStyle = isHigh ? 'border-l-4 border-l-red-600 bg-red-50/70' :
+                              isMedium ? 'border-l-4 border-l-amber-500 bg-amber-50/70' :
+                              'border-l-4 border-l-emerald-500 bg-emerald-50/70';
+
+            const badgeStyle = isHigh ? 'bg-red-600 text-white shadow-md shadow-red-600/30' :
+                               isMedium ? 'bg-amber-500 text-slate-950 font-bold' :
+                               'bg-emerald-100 text-emerald-800 border border-emerald-300';
+
+            return (
+                <div class={`glass-panel rounded-2xl p-4 transition-all duration-300 ${borderStyle}`}>
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div class="flex items-center gap-4">
+                            <span class={`font-outfit text-xs font-extrabold px-3.5 py-1.5 rounded-full uppercase tracking-wider ${badgeStyle}`}>
+                                {riskLevel} RISK
+                            </span>
+                            <div>
+                                <h3 class="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                                    Cardiology Risk Assessment Score: <span class="font-mono text-red-600 font-bold">{riskScore.toFixed(2)}</span>
+                                </h3>
+                                <p class="text-xs text-slate-500">Automated evaluation against Acute Coronary Syndrome & Red-Flag criteria</p>
+                            </div>
+                        </div>
+
+                        {/* Flagged Factors Badges */}
+                        <div class="flex flex-wrap items-center gap-2">
+                            {flaggedFactors.length > 0 ? (
+                                flaggedFactors.map((factor, idx) => (
+                                    <span key={idx} class="text-xs px-2.5 py-1 rounded-lg bg-red-100 text-red-800 border border-red-200 flex items-center gap-1.5 font-medium">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-red-600"></span>
+                                        {factor}
+                                    </span>
+                                ))
+                            ) : (
+                                <span class="text-xs px-2.5 py-1 rounded-lg bg-emerald-100 text-emerald-800 border border-emerald-200 font-medium">
+                                    No acute cardiovascular red flags detected
+                                </span>
+                            )}
+                        </div>
                     </div>
                 </div>
-                <div class="risk-factors" id="riskFactors">
-                    <span class="risk-factor-tag">No acute cardiac red flags detected</span>
-                </div>
-            </div>
-        </div>
+            );
+        }
 
-        <!-- Left Column: Live Audio Speech & Dialogue Transcript -->
-        <div class="card transcript-card">
-            <div class="card-header">
-                <div class="card-title">
-                    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-                    Live Dialogue & Speech Transcription
-                </div>
-                <span style="font-size: 12px; color: var(--text-dim);" id="speechSessionTag">Session: Inactive</span>
-            </div>
+        // ==========================================
+        // 3. DIARIZED TRANSCRIPT VIEWER COMPONENT
+        // ==========================================
+        function TranscriptViewer({ turns, partialText, isRecording }) {
+            const bottomRef = useRef(null);
 
-            <div class="transcript-box" id="transcriptBox">
-                <div style="text-align: center; margin: auto; color: var(--text-dim); font-size: 13px;">
-                    Click <strong>"Start Consultation"</strong> to stream live patient-doctor audio.
-                </div>
-            </div>
+            useEffect(() => {
+                bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+            }, [turns, partialText]);
 
-            <div class="streaming-ticker" id="streamingTicker" style="display: none;">
-                Listening: <span id="tickerText">Waiting for audio speech...</span>
-            </div>
-        </div>
+            return (
+                <div class="flex flex-col h-full">
+                    <div class="flex-1 overflow-y-auto space-y-4 pr-2 max-h-[520px]">
+                        {turns.length === 0 && !partialText ? (
+                            <div class="h-full flex flex-col items-center justify-center text-center p-8 text-slate-400">
+                                <svg class="w-12 h-12 mb-3 text-red-300 stroke-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 11a7 7 0 0 1-7 7m0 0a7 7 0 0 1-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 0 1-3-3V5a3 3 0 1 1 6 0v6a3 3 0 0 1-3 3z"/></svg>
+                                <p class="text-sm font-medium text-slate-700">No conversation recorded yet.</p>
+                                <p class="text-xs text-slate-500 mt-1">Click "Start Consultation" to record Doctor & Patient speech.</p>
+                            </div>
+                        ) : (
+                            turns.map((turn, idx) => {
+                                const isDoctor = (turn.speaker || '').toUpperCase() === 'DOCTOR';
+                                return (
+                                    <div key={idx} class={`flex flex-col ${isDoctor ? 'items-end' : 'items-start'} space-y-1`}>
+                                        <div class="flex items-center gap-2 px-1">
+                                            <span class={`text-[11px] font-bold uppercase ${isDoctor ? 'text-red-600' : 'text-slate-700'}`}>
+                                                {isDoctor ? '👨‍⚕️ DOCTOR' : '👤 PATIENT'}
+                                            </span>
+                                            <span class="text-[10px] text-slate-400 font-mono">
+                                                {turn.start != null ? `${turn.start.toFixed(1)}s - ${turn.end.toFixed(1)}s` : ''}
+                                            </span>
+                                        </div>
+                                        <div class={`max-w-[85%] rounded-2xl px-4 py-3 text-sm leading-relaxed ${
+                                            isDoctor 
+                                                ? 'bg-gradient-to-br from-red-600 to-rose-600 text-white shadow-md shadow-red-500/20 rounded-tr-none' 
+                                                : 'bg-slate-100 text-slate-900 border border-slate-200 shadow-sm rounded-tl-none'
+                                        }`}>
+                                            {turn.text}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
 
-        <!-- Right Column: AI Assistant Controls -->
-        <div class="assistant-col">
-            
-            <!-- Live Missing Info & Follow-Up Questions (Prominent for Doctors) -->
-            <div class="card questions-card">
-                <div class="card-header">
-                    <div class="card-title" style="color: var(--warning);">
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" style="color: var(--warning);"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-                        Suggested Follow-Up Questions
-                    </div>
-                    <span style="font-size: 11px; background: rgba(245, 158, 11, 0.15); color: var(--warning); padding: 2px 8px; border-radius: 10px; font-weight: 600;">LIVE ACC/AHA GUIDELINES</span>
-                </div>
-
-                <div class="questions-list" id="questionsList">
-                    <div style="font-size: 12.5px; color: var(--text-dim); text-align: center; padding: 12px;">
-                        Suggested clinical follow-up questions will appear here automatically as symptoms are spoken.
-                    </div>
-                </div>
-            </div>
-
-            <!-- Live Knowledge Graph & Clinical Facts -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-                        Extracted Clinical Entities
-                    </div>
-                </div>
-                <div class="entities-grid" id="entitiesGrid">
-                    <span style="font-size: 12px; color: var(--text-dim);">No entities extracted yet.</span>
-                </div>
-            </div>
-
-            <!-- Wikidata Candidate Diseases -->
-            <div class="card">
-                <div class="card-header">
-                    <div class="card-title">
-                        <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-                        Wikidata Differential Candidates
+                        {/* Streaming Ticker */}
+                        {isRecording && (
+                            <div class="p-3.5 rounded-xl bg-red-50 border-l-4 border-l-red-600 border border-red-200 text-xs italic text-red-900 animate-pulse">
+                                <span class="font-bold font-sans not-italic text-red-700 uppercase tracking-wider text-[10px] block mb-1">Streaming Partial Transcript:</span>
+                                "{partialText || 'Listening for speech...'}"
+                            </div>
+                        )}
+                        <div ref={bottomRef} />
                     </div>
                 </div>
-                <div class="candidates-list" id="candidatesList">
-                    <div style="font-size: 12px; color: var(--text-dim); text-align: center;">Differential diagnostic candidates will be generated automatically.</div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Developer Log Drawer -->
-        <div class="log-drawer">
-            <button class="drawer-toggle" onclick="toggleLogDrawer()">
-                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="6 9 12 15 18 9"/></svg>
-                WebSocket & API System Output Logs
-            </button>
-            <div class="log-box" id="logBox" style="display: none;">System initialized. Waiting for recording start...</div>
-        </div>
-    </main>
-
-    <script>
-        const startButton = document.getElementById("startButton");
-        const stopButton = document.getElementById("stopButton");
-        const statusPill = document.getElementById("statusPill");
-        const statusText = document.getElementById("statusText");
-        
-        const transcriptBox = document.getElementById("transcriptBox");
-        const streamingTicker = document.getElementById("streamingTicker");
-        const tickerText = document.getElementById("tickerText");
-        
-        const questionsList = document.getElementById("questionsList");
-        const entitiesGrid = document.getElementById("entitiesGrid");
-        const candidatesList = document.getElementById("candidatesList");
-        
-        const riskBanner = document.getElementById("riskBanner");
-        const riskBadge = document.getElementById("riskBadge");
-        const riskTitle = document.getElementById("riskTitle");
-        const riskScoreText = document.getElementById("riskScoreText");
-        const riskFactors = document.getElementById("riskFactors");
-        
-        const speechSessionTag = document.getElementById("speechSessionTag");
-        const logBox = document.getElementById("logBox");
-
-        let socket = null;
-        let recorder = null;
-        let microphoneStream = null;
-
-        function writeLog(msg) {
-            logBox.textContent += "\n[" + new Date().toLocaleTimeString() + "] " + msg;
-            logBox.scrollTop = logBox.scrollHeight;
+            );
         }
 
-        function toggleLogDrawer() {
-            logBox.style.display = logBox.style.display === "none" ? "block" : "none";
-        }
+        // ==========================================
+        // 4. INTERACTIVE KNOWLEDGE GRAPH VISUALIZER COMPONENT
+        // ==========================================
+        function GraphVisualizer({ nodes = [], relationships = [] }) {
+            const [selectedCategory, setSelectedCategory] = useState('ALL');
+            const [activeNode, setActiveNode] = useState(null);
 
-        function stopMicrophone() {
-            if (microphoneStream) {
-                microphoneStream.getTracks().forEach(track => track.stop());
-                microphoneStream = null;
-            }
-        }
+            // Filter noise tokens & deduplicate nodes by label
+            const cleanNodes = useMemo(() => {
+                const seen = new Set();
+                const result = [];
+                const stopWords = new Set(['2', '1', 'fast', 'type', 'medications', 'eerls', 'berry', 'pain']);
 
-        function resetButtons() {
-            startButton.disabled = false;
-            stopButton.disabled = true;
-            statusPill.className = "status-pill";
-            statusText.textContent = "System Ready";
-            streamingTicker.style.display = "none";
-        }
+                nodes.forEach(node => {
+                    const rawText = (node.label || node.text || '').trim();
+                    const lowerText = rawText.toLowerCase();
+                    
+                    if (!rawText || stopWords.has(lowerText) || lowerText.length < 3) return;
+                    if (/^\d+$/.test(lowerText)) return;
 
-        function updateRiskBanner(riskData) {
-            if (!riskData) return;
-            const level = (riskData.risk_level || "LOW").toLowerCase();
-            riskBanner.className = `card risk-banner-card ${level}`;
-            riskBadge.textContent = (riskData.risk_level || "LOW") + " RISK";
-            
-            riskScoreText.textContent = `Score: ${(riskData.risk_score || 0.2).toFixed(2)} | Flags: ${riskData.flagged_factors ? riskData.flagged_factors.length : 0}`;
-            
-            if (riskData.flagged_factors && riskData.flagged_factors.length > 0) {
-                riskFactors.innerHTML = riskData.flagged_factors.map(f => `<span class="risk-factor-tag">${f}</span>`).join("");
-            } else {
-                riskFactors.innerHTML = `<span class="risk-factor-tag">No acute cardiac red flags detected</span>`;
-            }
-        }
+                    if (!seen.has(lowerText)) {
+                        seen.add(lowerText);
+                        result.push(node);
+                    }
+                });
+                return result;
+            }, [nodes]);
 
-        function updateMissingQuestions(missingInfoArray) {
-            if (!missingInfoArray || missingInfoArray.length === 0) return;
-            
-            let allQuestions = [];
-            missingInfoArray.forEach(item => {
-                if (item.suggested_questions) {
-                    allQuestions.push(...item.suggested_questions);
-                }
-            });
+            // Group nodes by category
+            const filteredNodes = useMemo(() => {
+                if (selectedCategory === 'ALL') return cleanNodes;
+                return cleanNodes.filter(n => (n.category || n.label || '').toUpperCase().includes(selectedCategory));
+            }, [cleanNodes, selectedCategory]);
 
-            if (allQuestions.length === 0) return;
+            // Layout math for SVG visualization
+            const nodePositions = useMemo(() => {
+                const positions = {};
+                const width = 650;
+                const height = 420;
+                const centerX = width / 2;
+                const centerY = height / 2;
 
-            questionsList.innerHTML = allQuestions.map((q, idx) => `
-                <div class="question-item">
-                    <input type="checkbox" class="question-checkbox" id="q_${idx}">
-                    <label for="q_${idx}" class="question-text">${q}</label>
-                </div>
-            `).join("");
-        }
+                positions['patient'] = { x: centerX, y: centerY, color: '#DC2626', label: 'Patient', category: 'Patient' };
 
-        function updateExtractedEntities(entities) {
-            if (!entities || entities.length === 0) return;
-            
-            entitiesGrid.innerHTML = entities.map(e => {
-                const isNegated = e.negated || e.status === "absent";
-                const cat = (e.label || e.category || "symptom").toLowerCase();
-                let catClass = "symptom";
-                if (cat.includes("disease")) catClass = "disease";
-                if (cat.includes("medication")) catClass = "medication";
-                if (cat.includes("duration")) catClass = "duration";
+                const total = filteredNodes.length;
+                filteredNodes.forEach((node, idx) => {
+                    const angle = (idx / Math.max(1, total)) * 2 * Math.PI;
+                    const radius = 135 + (idx % 2) * 45;
+                    const x = centerX + radius * Math.cos(angle);
+                    const y = centerY + radius * Math.sin(angle);
 
-                return `
-                    <div class="entity-chip ${catClass} ${isNegated ? 'negated' : ''}">
-                        <span>${e.text}</span>
-                        <span style="font-size: 10px; opacity: 0.7;">(${cat})</span>
-                    </div>
-                `;
-            }).join("");
-        }
-
-        function updateCandidates(candidates) {
-            if (!candidates || candidates.length === 0) return;
-
-            candidatesList.innerHTML = candidates.map(c => `
-                <div class="candidate-item">
-                    <div class="candidate-name">${c.disease_name}</div>
-                    <div class="candidate-matches">${c.match_count} Matches</div>
-                </div>
-            `).join("");
-        }
-
-        startButton.addEventListener("click", async () => {
-            try {
-                transcriptBox.innerHTML = `<div style="color: var(--text-dim); text-align: center; margin: auto;">Connecting to live audio stream...</div>`;
-                startButton.disabled = true;
-                stopButton.disabled = true;
-
-                microphoneStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-
-                socket = new WebSocket("ws://127.0.0.1:8000/speech/live");
-
-                socket.onopen = () => {
-                    statusPill.className = "status-pill connected recording";
-                    statusText.textContent = "Live Recording Active";
-                    streamingTicker.style.display = "block";
-                    tickerText.textContent = "Listening to doctor & patient conversation...";
-
-                    const options = {};
-                    if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
-                        options.mimeType = "audio/webm;codecs=opus";
+                    const isAbsent = node.status === 'absent' || node.negated;
+                    let color = isAbsent ? '#94A3B8' : '#DC2626'; // Slate gray for Ruled Out / Absent
+                    const cat = (node.category || node.label || '').toUpperCase();
+                    if (!isAbsent) {
+                        if (cat.includes('SYMPTOM') || cat.includes('SIGN')) color = '#DC2626';
+                        if (cat.includes('DISEASE')) color = '#9333EA';
+                        if (cat.includes('MEDICATION')) color = '#10B981';
+                        if (cat.includes('DURATION') || cat.includes('SEVERITY')) color = '#F59E0B';
                     }
 
-                    recorder = new MediaRecorder(microphoneStream, options);
+                    positions[node.id || `node_${idx}`] = {
+                        ...node,
+                        x,
+                        y,
+                        color,
+                        isAbsent,
+                        label: node.label || node.text || 'Entity'
+                    };
+                });
 
-                    recorder.ondataavailable = (event) => {
-                        if (event.data.size > 0 && socket.readyState === WebSocket.OPEN) {
-                            socket.send(event.data);
+                return positions;
+            }, [filteredNodes]);
+
+            return (
+                <div class="flex flex-col h-full space-y-4">
+                    {/* Category Filter Pills & Visual Legend */}
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex flex-wrap items-center gap-2">
+                            {['ALL', 'SYMPTOM', 'DISEASE', 'MEDICATION', 'DURATION'].map(cat => (
+                                <button
+                                    key={cat}
+                                    onClick={() => setSelectedCategory(cat)}
+                                    class={`text-xs px-3 py-1 rounded-lg font-medium transition-all ${
+                                        selectedCategory === cat 
+                                            ? 'bg-red-600 text-white font-bold shadow-md shadow-red-500/30' 
+                                            : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'
+                                    }`}
+                                >
+                                    {cat}
+                                </button>
+                            ))}
+                        </div>
+
+                        {/* Node Color Legend */}
+                        <div class="flex items-center gap-3 text-[11px] text-slate-600 font-medium">
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-red-600"></span> Active Symptom</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-purple-600"></span> Disease</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-600"></span> Medication</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-amber-500"></span> Duration</span>
+                            <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-slate-400"></span> Ruled Out / Absent</span>
+                        </div>
+                    </div>
+
+                    {/* SVG Interactive Graph Canvas */}
+                    <div class="relative flex-1 bg-slate-50 rounded-2xl border border-slate-200 overflow-hidden min-h-[380px] flex items-center justify-center">
+                        {Object.keys(nodePositions).length <= 1 ? (
+                            <div class="text-center p-6 text-slate-400">
+                                <p class="text-sm font-medium text-slate-600">Knowledge Graph Canvas</p>
+                                <p class="text-xs text-slate-400 mt-1">Patient entity network will appear here dynamically as speech is processed.</p>
+                            </div>
+                        ) : (
+                            <svg class="w-full h-full max-h-[440px]" viewBox="0 0 650 420">
+                                {/* Connect Edges to Center Patient Node */}
+                                {Object.entries(nodePositions).map(([id, pos]) => {
+                                    if (id === 'patient') return null;
+                                    const center = nodePositions['patient'];
+                                    return (
+                                        <g key={`edge_${id}`}>
+                                            <line 
+                                                x1={center.x} 
+                                                y1={center.y} 
+                                                x2={pos.x} 
+                                                y2={pos.y} 
+                                                stroke={pos.color} 
+                                                stroke-width="1.8" 
+                                                stroke-opacity={pos.isAbsent ? "0.2" : "0.5"}
+                                                stroke-dasharray={pos.isAbsent ? "2,2" : "4"}
+                                            />
+                                        </g>
+                                    );
+                                })}
+
+                                {/* Render Interactive Nodes */}
+                                {Object.entries(nodePositions).map(([id, pos]) => (
+                                    <g 
+                                        key={id} 
+                                        transform={`translate(${pos.x}, ${pos.y})`}
+                                        onClick={() => setActiveNode(pos)}
+                                        class="cursor-pointer group"
+                                    >
+                                        <circle 
+                                            r={id === 'patient' ? 22 : 16} 
+                                            fill={pos.color} 
+                                            fill-opacity={pos.isAbsent ? "0.1" : "0.2"} 
+                                            stroke={pos.color} 
+                                            stroke-width="2" 
+                                            stroke-dasharray={pos.isAbsent ? "3,3" : "none"}
+                                            class="transition-all duration-300 group-hover:scale-125"
+                                        />
+                                        <circle 
+                                            r={id === 'patient' ? 8 : 6} 
+                                            fill={pos.color} 
+                                        />
+                                        <text 
+                                            y={id === 'patient' ? 36 : 28} 
+                                            text-anchor="middle" 
+                                            fill={pos.isAbsent ? "#64748B" : "#0F172A"} 
+                                            font-size="11" 
+                                            font-weight={pos.isAbsent ? "500" : "600"}
+                                            class="drop-shadow-sm select-none"
+                                        >
+                                            {pos.label} {pos.isAbsent ? '(Ruled Out)' : ''}
+                                        </text>
+                                    </g>
+                                ))}
+                            </svg>
+                        )}
+
+                        {/* Selected Node Inspector Drawer */}
+                        {activeNode && (
+                            <div class="absolute bottom-3 right-3 glass-panel p-4 rounded-xl border border-red-200 text-xs max-w-xs space-y-1 shadow-xl animate-fadeIn">
+                                <div class="flex justify-between items-center pb-1">
+                                    <span class="font-bold text-red-600">{activeNode.label}</span>
+                                    <button onClick={() => setActiveNode(null)} class="text-slate-400 hover:text-slate-700">✕</button>
+                                </div>
+                                <div class="text-slate-600">Category: <span class="font-mono text-slate-900 font-medium">{activeNode.category || 'N/A'}</span></div>
+                                <div class="text-slate-600">Status: <span class="font-mono text-emerald-600 font-semibold">{activeNode.status || 'present'}</span></div>
+                            </div>
+                        )}
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // 5. AUTO-STRUCTURED SOAP NOTE VIEWER COMPONENT
+        // ==========================================
+        function SOAPViewer({ transcript, entities = [], riskAnalysis, missingInfo = [], ragResult }) {
+            const [copied, setCopied] = useState(false);
+
+            const presentSymptoms = useMemo(() => 
+                entities.filter(e => !e.negated && (e.label || e.category || '').toLowerCase().includes('symptom')),
+            [entities]);
+
+            const medications = useMemo(() => 
+                entities.filter(e => !e.negated && e.status !== 'absent' && (e.label || e.category || '').toLowerCase().includes('medication')),
+            [entities]);
+
+            const copySOAP = () => {
+                const text = `
+=== CLINEXPLAIN SOAP NOTE ===
+SUBJECTIVE:
+- Chief Symptoms: ${presentSymptoms.map(s => s.text).join(', ') || 'None reported'}
+- Patient Transcript: ${transcript || 'N/A'}
+
+OBJECTIVE:
+- Medications Mentioned: ${medications.map(m => m.text).join(', ') || 'None'}
+- Clinical Facts Extracted: ${entities.length} total entities
+
+ASSESSMENT:
+- Cardiology Risk Level: ${riskAnalysis?.risk_level || 'LOW'} (Score: ${riskAnalysis?.risk_score || 0.2})
+- Risk Factors: ${riskAnalysis?.flagged_factors?.join('; ') || 'None'}
+
+PLAN & GUIDELINE RAG:
+- Suggested Clinical Questions: ${missingInfo.flatMap(m => m.suggested_questions || []).join('; ') || 'Standard follow-up'}
+- RAG Guideline Evidence: ${ragResult?.llm_explanation || 'N/A'}
+- BP Threshold Facts: ${ragResult?.bp_conditions?.join(', ') || 'N/A'}
+- Timing Window: ${ragResult?.timing_facts?.join('; ') || 'N/A'}
+- Claim Faithfulness: ${ragResult?.validation_scores?.faithfulness?.toFixed(1) || 100}%
+                `.trim();
+                navigator.clipboard.writeText(text);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+            };
+
+            return (
+                <div class="flex flex-col h-full space-y-4">
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-semibold text-slate-500">Structured Clinical Consultation Note (with WHO RAG Evidence)</span>
+                        <button 
+                            onClick={copySOAP}
+                            class="text-xs font-medium px-3 py-1.5 rounded-lg bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-all font-semibold"
+                        >
+                            {copied ? '✓ Copied to Clipboard' : '📋 Copy SOAP Note'}
+                        </button>
+                    </div>
+
+                    {/* 4-Quadrant SOAP Cards */}
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 flex-1 overflow-y-auto max-h-[500px] pr-1">
+                        {/* Subjective Card */}
+                        <div class="glass-panel p-4 rounded-xl border-l-4 border-l-red-600 space-y-2">
+                            <h4 class="font-outfit text-xs font-bold text-red-600 uppercase tracking-wider">S - Subjective</h4>
+                            <p class="text-xs text-slate-700 leading-relaxed">
+                                <strong class="text-slate-900">Symptoms Reported:</strong> {presentSymptoms.map(s => s.text).join(', ') || 'No active symptoms detected yet.'}
+                            </p>
+                            <p class="text-xs text-slate-500 line-clamp-3 italic">
+                                "{transcript || 'Awaiting live patient conversation...'}"
+                            </p>
+                        </div>
+
+                        {/* Objective Card */}
+                        <div class="glass-panel p-4 rounded-xl border-l-4 border-l-slate-700 space-y-2">
+                            <h4 class="font-outfit text-xs font-bold text-slate-700 uppercase tracking-wider">O - Objective</h4>
+                            <p class="text-xs text-slate-700">
+                                <strong class="text-slate-900">Active Medications:</strong> {medications.map(m => m.text).join(', ') || 'None'}
+                            </p>
+                            <p class="text-xs text-slate-700">
+                                <strong class="text-slate-900">Entities Identified:</strong> {entities.length} extracted clinical facts
+                            </p>
+                        </div>
+
+                        {/* Assessment Card */}
+                        <div class="glass-panel p-4 rounded-xl border-l-4 border-l-purple-600 space-y-2">
+                            <h4 class="font-outfit text-xs font-bold text-purple-600 uppercase tracking-wider">A - Assessment</h4>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold text-slate-900">Risk Category:</span>
+                                <span class="text-xs font-mono font-bold px-2 py-0.5 rounded bg-purple-100 text-purple-800 border border-purple-200">
+                                    {riskAnalysis?.risk_level || 'LOW'}
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-600">
+                                {riskAnalysis?.flagged_factors?.join(', ') || 'Standard clinical risk profile.'}
+                            </p>
+                        </div>
+
+                        {/* Plan Card (Enhanced with WHO RAG Evidence) */}
+                        <div class="glass-panel p-4 rounded-xl border-l-4 border-l-rose-600 space-y-2">
+                            <div class="flex items-center justify-between">
+                                <h4 class="font-outfit text-xs font-bold text-rose-600 uppercase tracking-wider">P - Plan & WHO Guideline RAG</h4>
+                                {ragResult?.validation_scores && (
+                                    <span class="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                                        Faithfulness: {ragResult.validation_scores.faithfulness.toFixed(1)}%
+                                    </span>
+                                )}
+                            </div>
+
+                            {/* Guideline Explanation */}
+                            {ragResult?.llm_explanation && (
+                                <div class="p-2.5 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-800 leading-relaxed">
+                                    <span class="text-red-700 font-semibold block mb-1">RAG Guideline Synthesis:</span>
+                                    {ragResult.llm_explanation}
+                                </div>
+                            )}
+
+                            {/* Deterministic BP & Timing Facts */}
+                            {ragResult?.bp_conditions?.length > 0 && (
+                                <div class="text-xs text-slate-700">
+                                    <strong class="text-slate-900">BP Thresholds:</strong> {ragResult.bp_conditions.join('; ')}
+                                </div>
+                            )}
+
+                            {/* Diagnostic Follow-Ups or Completion Status */}
+                            {missingInfo.flatMap(m => m.suggested_questions || []).length > 0 ? (
+                                <div class="pt-1">
+                                    <span class="text-[11px] font-semibold text-amber-700 block mb-1">Recommended Follow-Up Questions:</span>
+                                    <ul class="text-xs text-slate-700 list-disc list-inside space-y-1">
+                                        {missingInfo.flatMap(m => m.suggested_questions || []).slice(0, 2).map((q, i) => (
+                                            <li key={i} class="truncate">{q}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                            ) : (
+                                <div class="text-[11px] text-emerald-700 font-semibold pt-1 flex items-center gap-1">
+                                    ✓ Core ACC/AHA diagnostic questions addressed during dialogue.
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        // ==========================================
+        // 6. CLINICAL EVIDENCE & CLAIM VALIDATOR VIEWER
+        // ==========================================
+        function EvidenceViewer({ entities = [], candidateDiseases = [], ragResult, onRunRAGQuery, isQueryingRAG }) {
+            const [viewMode, setViewMode] = useState('entities'); // 'entities', 'chunks', 'claims'
+            const [customQuery, setCustomQuery] = useState('');
+            const dynamicPrompts = useMemo(() => {
+                if (ragResult?.dynamic_prompts && ragResult.dynamic_prompts.length > 0) {
+                    return ragResult.dynamic_prompts;
+                }
+                if (entities && entities.length > 0) {
+                    const text = entities.map(e => (e.text || '').toLowerCase()).join(' ');
+                    const list = [];
+                    if (text.includes('chest') || text.includes('pain') || text.includes('angina')) {
+                        list.push("Chest pain & exertional angina guidelines");
+                    }
+                    if (text.includes('hypertension') || text.includes('pressure') || text.includes('140') || text.includes('blood')) {
+                        list.push("WHO hypertension treatment start guidelines");
+                    }
+                    if (text.includes('160') || text.includes('severe') || text.includes('stairs') || text.includes('urgent')) {
+                        list.push("SBP >= 160 urgent treatment protocol");
+                    }
+                    if (text.includes('diabetes')) {
+                        list.push("Hypertension treatment thresholds with diabetes");
+                    }
+                    if (text.includes('aspirin')) {
+                        list.push("Antiplatelet & Aspirin clinical guidelines");
+                    }
+                    if (text.includes('penicillin') || text.includes('allergy')) {
+                        list.push("Medication allergy & alternative drug protocols");
+                    }
+                    if (list.length > 0) return list.slice(0, 4);
+                }
+                return [
+                    "Hypertension treatment start guidelines",
+                    "SBP >= 160 urgent treatment protocol",
+                    "Chest pain & exertional angina guidelines"
+                ];
+            }, [entities, ragResult]);
+
+            const isPatientSpecific = entities && entities.length > 0;
+
+            const handleQuerySubmit = (e) => {
+                e.preventDefault();
+                if (customQuery.trim() && onRunRAGQuery) {
+                    onRunRAGQuery(customQuery, entities);
+                }
+            };
+
+            return (
+                <div class="flex flex-col h-full space-y-4">
+                    {/* Top RAG Query Bar & Quick Chips */}
+                    <form onSubmit={handleQuerySubmit} class="flex flex-col gap-2 glass-panel p-3 rounded-xl border border-red-200">
+                        <div class="flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={customQuery}
+                                onChange={(e) => setCustomQuery(e.target.value)}
+                                placeholder="Query medical guidelines (e.g. When should treatment start for SBP >= 160?)"
+                                class="flex-1 bg-slate-50 text-xs text-slate-900 px-3 py-2 rounded-lg border border-slate-200 focus:outline-none focus:border-red-600 placeholder:text-slate-400"
+                            />
+                            <button
+                                type="submit"
+                                disabled={isQueryingRAG}
+                                class="px-4 py-2 rounded-lg bg-gradient-to-r from-red-600 to-rose-600 text-xs font-semibold text-white hover:from-red-500 hover:to-rose-500 shadow-md shadow-red-500/20 disabled:opacity-50"
+                            >
+                                {isQueryingRAG ? 'Searching...' : '🔍 Query RAG'}
+                            </button>
+                        </div>
+
+                        {/* One-Click Dynamic Quick Prompts */}
+                        <div class="flex flex-wrap items-center gap-1.5 pt-1 text-[11px]">
+                            <span class="text-slate-600 font-semibold flex items-center gap-1">
+                                {isPatientSpecific ? '✨ Patient-Tailored Prompts:' : 'Quick Prompts:'}
+                            </span>
+                            {dynamicPrompts.map((prompt, pIdx) => (
+                                <button
+                                    key={pIdx}
+                                    type="button"
+                                    onClick={() => { setCustomQuery(prompt); onRunRAGQuery && onRunRAGQuery(prompt, entities); }}
+                                    class={`px-2.5 py-1 rounded-md border transition-all font-medium cursor-pointer ${
+                                        isPatientSpecific 
+                                            ? 'bg-red-600 text-white border-red-700 hover:bg-red-700 shadow-sm shadow-red-500/20' 
+                                            : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+                                    }`}
+                                >
+                                    💡 {prompt}
+                                </button>
+                            ))}
+                        </div>
+                    </form>
+
+                    {/* View Switcher Pills */}
+                    <div class="flex items-center justify-between text-xs">
+                        <div class="flex items-center gap-2">
+                            <button
+                                onClick={() => setViewMode('entities')}
+                                class={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                                    viewMode === 'entities' ? 'bg-red-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                🧪 Entity Spans ({entities.length})
+                            </button>
+                            <button
+                                onClick={() => setViewMode('chunks')}
+                                class={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                                    viewMode === 'chunks' ? 'bg-red-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                📚 FAISS Chunks ({ragResult?.retrieved_chunks?.length || 0})
+                            </button>
+                            <button
+                                onClick={() => setViewMode('claims')}
+                                class={`px-3 py-1.5 rounded-lg font-medium transition-all ${
+                                    viewMode === 'claims' ? 'bg-red-600 text-white font-bold' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                                }`}
+                            >
+                                🛡️ Claim Validation ({ragResult?.validation_results?.length || 0})
+                            </button>
+                        </div>
+
+                        {ragResult?.validation_scores && (
+                            <div class="text-xs font-mono text-emerald-700 font-semibold flex items-center gap-1.5">
+                                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                Faithfulness: {ragResult.validation_scores.faithfulness.toFixed(1)}%
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Mode 1: Medical Entities Table */}
+                    {viewMode === 'entities' && (
+                        <div class="overflow-x-auto flex-1 max-h-[420px]">
+                            <table class="w-full text-left text-xs text-slate-700">
+                                <thead class="text-[11px] uppercase bg-slate-100 text-slate-600 sticky top-0 border-b border-slate-200">
+                                    <tr>
+                                        <th class="p-3">Entity Text</th>
+                                        <th class="p-3">Category</th>
+                                        <th class="p-3">Span Offset</th>
+                                        <th class="p-3">Assertion</th>
+                                        <th class="p-3">Source</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-slate-100">
+                                    {entities.length === 0 ? (
+                                        <tr>
+                                            <td colSpan="5" class="p-8 text-center text-slate-400">No clinical evidence extracted yet. Run live consultation or query RAG above.</td>
+                                        </tr>
+                                    ) : (
+                                        entities.map((e, idx) => (
+                                            <tr key={idx} class="hover:bg-slate-50 transition-colors">
+                                                <td class="p-3 font-semibold text-slate-900">{e.text}</td>
+                                                <td class="p-3">
+                                                    <span class="px-2 py-0.5 rounded bg-red-50 text-red-700 border border-red-200 font-mono text-[11px] font-semibold">
+                                                        {e.label || e.category}
+                                                    </span>
+                                                </td>
+                                                <td class="p-3 font-mono text-slate-500">[{e.start}, {e.end}]</td>
+                                                <td class="p-3">
+                                                    <span class={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${
+                                                        e.negated || e.status === 'absent' 
+                                                            ? 'bg-red-100 text-red-800 border border-red-200' 
+                                                            : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                                    }`}>
+                                                        {e.negated ? 'Absent' : 'Present'}
+                                                    </span>
+                                                </td>
+                                                <td class="p-3 text-slate-500 font-mono">{e.source || 'BioBERT Model'}</td>
+                                            </tr>
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
+
+                    {/* Mode 2: FAISS Chunks List */}
+                    {viewMode === 'chunks' && (
+                        <div class="space-y-3 flex-1 overflow-y-auto max-h-[420px] pr-1">
+                            {!ragResult?.retrieved_chunks || ragResult.retrieved_chunks.length === 0 ? (
+                                <div class="text-center p-8 text-slate-400 text-xs">No vector chunks loaded. Enter a guideline question above to retrieve FAISS evidence.</div>
+                            ) : (
+                                ragResult.retrieved_chunks.map((chunk, idx) => (
+                                    <div key={idx} class="glass-panel p-3.5 rounded-xl space-y-1.5 border border-slate-200 text-xs">
+                                        <div class="flex justify-between items-center text-[11px] font-mono text-slate-500">
+                                            <span class="font-bold text-red-600">Rank #{chunk.rank} — Chunk ID: {chunk.chunk_id}</span>
+                                            <span>Distance: {chunk.distance.toFixed(4)}</span>
+                                        </div>
+                                        <div class="text-slate-800 leading-relaxed font-sans">{chunk.content}</div>
+                                    </div>
+                                ))
+                            )}
+                        </div>
+                    )}
+
+                    {/* Mode 3: Claim Validation Table */}
+                    {viewMode === 'claims' && (
+                        <div class="space-y-3 flex-1 overflow-y-auto max-h-[420px] pr-1">
+                            {!ragResult?.validation_results || ragResult.validation_results.length === 0 ? (
+                                <div class="text-center p-8 text-slate-400 text-xs">No claims validated yet. Enter a guideline prompt to execute claim-level verification.</div>
+                            ) : (
+                                <div class="space-y-2">
+                                    {/* Faithfulness Summary Metric */}
+                                    <div class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200">
+                                        <div>
+                                            <div class="text-xs font-semibold text-slate-900">Claim-Level Faithfulness Score</div>
+                                            <div class="text-[11px] text-slate-500">
+                                                Supported: {ragResult.validation_scores.supported} | Partial: {ragResult.validation_scores.partial} | Unsupported: {ragResult.validation_scores.unsupported}
+                                            </div>
+                                        </div>
+                                        <div class="text-lg font-mono font-bold text-red-600">
+                                            {ragResult.validation_scores.faithfulness.toFixed(1)}%
+                                        </div>
+                                    </div>
+
+                                    {/* Claims Table */}
+                                    <table class="w-full text-left text-xs text-slate-700">
+                                        <thead class="text-[11px] uppercase bg-slate-100 text-slate-600 sticky top-0 border-b border-slate-200">
+                                            <tr>
+                                                <th class="p-3">Extracted Claim</th>
+                                                <th class="p-3">Claim Type</th>
+                                                <th class="p-3">Validation Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            {ragResult.validation_results.map((c, i) => (
+                                                <tr key={i} class="hover:bg-slate-50 transition-colors">
+                                                    <td class="p-3 text-slate-900 font-medium">{c.claim}</td>
+                                                    <td class="p-3 font-mono text-red-700 text-[11px] font-semibold">{c.type}</td>
+                                                    <td class="p-3">
+                                                        <span class={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${
+                                                            c.status === 'SUPPORTED' ? 'bg-emerald-100 text-emerald-800 border border-emerald-200' :
+                                                            c.status === 'PARTIALLY SUPPORTED' ? 'bg-amber-100 text-amber-800 border border-amber-200' :
+                                                            'bg-red-100 text-red-800 border border-red-200'
+                                                        }`}>
+                                                            {c.status === 'SUPPORTED' ? '✓ Supported' : c.status === 'PARTIALLY SUPPORTED' ? '⚠️ Partial' : '✗ Unsupported'}
+                                                        </span>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        // ==========================================
+        // 7. MAIN REACT APP DASHBOARD COMPONENT
+        // ==========================================
+        function App() {
+            const [isRecording, setIsRecording] = useState(false);
+            const [isConnected, setIsConnected] = useState(false);
+            const [sessionTag, setSessionTag] = useState('');
+            const [timerSec, setTimerSec] = useState(0);
+
+            const [activeTab, setActiveTab] = useState('transcript'); // 'transcript', 'graph', 'soap', 'evidence'
+
+            const [fullTranscript, setFullTranscript] = useState('');
+            const [turns, setTurns] = useState([]);
+            const [partialText, setPartialText] = useState('');
+            const [entities, setEntities] = useState([]);
+            const [missingInfo, setMissingInfo] = useState([]);
+            const [riskAnalysis, setRiskAnalysis] = useState(null);
+            const [candidateDiseases, setCandidateDiseases] = useState([]);
+            const [graphNodes, setGraphNodes] = useState([]);
+            const [graphRelationships, setGraphRelationships] = useState([]);
+
+            // RAG Guideline Evidence & Claim Validation State
+            const [ragResult, setRagResult] = useState(null);
+            const [isQueryingRAG, setIsQueryingRAG] = useState(false);
+
+            const socketRef = useRef(null);
+            const recorderRef = useRef(null);
+            const streamRef = useRef(null);
+            const timerRef = useRef(null);
+
+            // RAG Guideline API Query Handler
+            const runRAGQuery = async (queryText, activeEntities = null) => {
+                try {
+                    setIsQueryingRAG(true);
+                    const res = await fetch("/api/rag/query", {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            question: queryText, 
+                            top_k: 5,
+                            entities: activeEntities || entities,
+                            risk_analysis: riskAnalysis
+                        }),
+                    });
+                    if (res.ok) {
+                        const data = await res.json();
+                        setRagResult(data);
+                    }
+                } catch (err) {
+                    console.error("RAG query failed:", err);
+                } finally {
+                    setIsQueryingRAG(false);
+                }
+            };
+
+            // Timer Tick
+            useEffect(() => {
+                if (isRecording) {
+                    timerRef.current = setInterval(() => setTimerSec(s => s + 1), 1000);
+                } else {
+                    clearInterval(timerRef.current);
+                }
+                return () => clearInterval(timerRef.current);
+            }, [isRecording]);
+
+            const stopMicrophone = () => {
+                if (streamRef.current) {
+                    streamRef.current.getTracks().forEach(t => t.stop());
+                    streamRef.current = null;
+                }
+            };
+
+            const startConsultation = async () => {
+                try {
+                    setTimerSec(0);
+                    setPartialText('');
+                    streamRef.current = await navigator.mediaDevices.getUserMedia({ audio: true });
+
+                    const ws = new WebSocket("ws://127.0.0.1:8000/speech/live");
+                    socketRef.current = ws;
+
+                    ws.onopen = () => {
+                        setIsConnected(true);
+                        setIsRecording(true);
+
+                        const options = {};
+                        if (MediaRecorder.isTypeSupported("audio/webm;codecs=opus")) {
+                            options.mimeType = "audio/webm;codecs=opus";
+                        }
+                        const rec = new MediaRecorder(streamRef.current, options);
+                        recorderRef.current = rec;
+
+                        rec.ondataavailable = (event) => {
+                            if (event.data.size > 0 && ws.readyState === WebSocket.OPEN) {
+                                ws.send(event.data);
+                            }
+                        };
+
+                        rec.onstop = () => {
+                            if (ws.readyState === WebSocket.OPEN) {
+                                ws.send("stop");
+                            }
+                            stopMicrophone();
+                        };
+
+                        rec.start(1000);
+                    };
+
+                    ws.onmessage = (event) => {
+                        try {
+                            const res = JSON.parse(event.data);
+                            if (res.event === 'connected') {
+                                setSessionTag('Session: ' + res.session_id.substring(0, 8));
+                            } else if (res.event === 'partial_transcript') {
+                                setPartialText(res.transcript || '');
+                                setFullTranscript(res.transcript || '');
+                                if (res.missing_information) setMissingInfo(res.missing_information);
+                                if (res.risk_analysis) setRiskAnalysis(res.risk_analysis);
+                                if (res.medical_nlp?.entities) setEntities(res.medical_nlp.entities);
+                                if (res.candidate_diseases) setCandidateDiseases(res.candidate_diseases);
+                                if (res.graph_nodes) setGraphNodes(res.graph_nodes);
+                                if (res.graph_relationships) setGraphRelationships(res.graph_relationships);
+                            } else if (res.event === 'completed') {
+                                setIsRecording(false);
+                                setPartialText('');
+                                if (res.result?.transcript) setFullTranscript(res.result.transcript);
+                                if (res.result?.conversation) setTurns(res.result.conversation);
+                                if (res.result?.medical_nlp?.entities) setEntities(res.result.medical_nlp.entities);
+                                if (res.result?.rag_result) setRagResult(res.result.rag_result);
+                            }
+                        } catch (err) {
+                            console.error("Message parse error:", err);
                         }
                     };
 
-                    recorder.onstop = () => {
-                        writeLog("Recording uploaded. Finalizing clinical evaluation...");
-                        if (socket && socket.readyState === WebSocket.OPEN) {
-                            socket.send("stop");
-                        }
+                    ws.onclose = () => {
+                        setIsConnected(false);
+                        setIsRecording(false);
                         stopMicrophone();
                     };
 
-                    recorder.start(1000);
-                    stopButton.disabled = false;
-                    writeLog("Microphone stream started successfully.");
-                };
+                } catch (err) {
+                    alert("Audio device access error: " + err.message);
+                }
+            };
 
-                socket.onmessage = (event) => {
-                    try {
-                        const response = JSON.parse(event.data);
-
-                        if (response.event === "connected") {
-                            speechSessionTag.textContent = "Session: " + response.session_id.substring(0, 8);
-                            writeLog("WebSocket Connected. Session: " + response.session_id);
-                        } 
-                        else if (response.event === "partial_transcript") {
-                            tickerText.textContent = response.transcript;
-                            
-                            // Real-time missing information, risk & entities updates!
-                            if (response.missing_information) updateMissingQuestions(response.missing_information);
-                            if (response.risk_analysis) updateRiskBanner(response.risk_analysis);
-                            if (response.medical_nlp && response.medical_nlp.entities) updateExtractedEntities(response.medical_nlp.entities);
-                            if (response.candidate_diseases) updateCandidates(response.candidate_diseases);
-                            
-                            writeLog(`Partial transcript chunk #${response.through_chunk}: "${response.transcript}"`);
-                        }
-                        else if (response.event === "completed") {
-                            writeLog("Pipeline processing completed successfully.");
-                            streamingTicker.style.display = "none";
-                            
-                            if (response.result && response.result.conversation) {
-                                transcriptBox.innerHTML = response.result.conversation.map(turn => `
-                                    <div class="chat-turn ${(turn.speaker || "").toLowerCase()}">
-                                        <div class="chat-speaker">${turn.speaker}</div>
-                                        <div class="chat-bubble">${turn.text}</div>
-                                    </div>
-                                `).join("");
-                            }
-
-                            if (response.result && response.result.medical_nlp) {
-                                updateExtractedEntities(response.result.medical_nlp.entities);
-                            }
-                        }
-                        else if (response.event === "error") {
-                            writeLog("Server Error: " + response.message);
-                        }
-                    } catch (err) {
-                        writeLog("Message parse error: " + err.message);
+            // Auto-cleanup on browser reload/tab close
+            useEffect(() => {
+                const handleBeforeUnload = () => {
+                    if (socketRef.current) {
+                        try {
+                            socketRef.current.send("stop");
+                            socketRef.current.close();
+                        } catch (e) {}
                     }
+                    fetch("/speech/reset", { method: "POST", keepalive: true }).catch(() => {});
                 };
+                window.addEventListener('beforeunload', handleBeforeUnload);
+                return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+            }, []);
 
-                socket.onerror = () => {
-                    writeLog("WebSocket error occurred.");
+            const stopConsultation = () => {
+                setIsRecording(false);
+                if (recorderRef.current && recorderRef.current.state !== 'inactive') {
+                    recorderRef.current.stop();
+                }
+            };
+
+            const resetConsultation = async () => {
+                if (isRecording) {
+                    setIsRecording(false);
                     stopMicrophone();
-                    resetButtons();
-                };
+                }
+                if (socketRef.current) {
+                    try {
+                        socketRef.current.send("stop");
+                        socketRef.current.close();
+                    } catch (e) {}
+                    socketRef.current = null;
+                }
+                try {
+                    await fetch("/speech/reset", { method: "POST" });
+                } catch (e) {}
 
-                socket.onclose = () => {
-                    writeLog("WebSocket closed.");
-                    stopMicrophone();
-                    resetButtons();
-                };
+                setTurns([]);
+                setPartialText('');
+                setFullTranscript('');
+                setEntities([]);
+                setMissingInfo([]);
+                setRiskAnalysis(null);
+                setCandidateDiseases([]);
+                setGraphNodes([]);
+                setGraphRelationships([]);
+                setRagResult(null);
+                setTimerSec(0);
+                setSessionTag('');
+                setIsConnected(false);
+            };
 
-            } catch (err) {
-                writeLog("Recording error: " + err.message);
-                stopMicrophone();
-                resetButtons();
-            }
-        });
+            return (
+                <div class="flex-1 flex flex-col">
+                    <Header 
+                        isRecording={isRecording}
+                        isConnected={isConnected}
+                        onStart={startConsultation}
+                        onStop={stopConsultation}
+                        onReset={resetConsultation}
+                        sessionTag={sessionTag}
+                        timerSec={timerSec}
+                    />
 
-        stopButton.addEventListener("click", () => {
-            stopButton.disabled = true;
-            statusText.textContent = "Processing Audio...";
-            if (recorder && recorder.state !== "inactive") {
-                recorder.stop();
-            } else {
-                resetButtons();
-            }
-        });
+                    <main class="flex-1 p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 max-w-[1800px] w-full mx-auto">
+                        
+                        {/* Top Cardiology Risk Banner */}
+                        <div class="lg:col-span-12">
+                            <CardiologyRiskBanner riskAnalysis={riskAnalysis} />
+                        </div>
+
+                        {/* Left Column: Live Audio Speech & Dialogue Transcript (5 cols) */}
+                        <div class="lg:col-span-5 flex flex-col space-y-4">
+                            <div class="glass-panel rounded-2xl p-5 flex-1 flex flex-col">
+                                <div class="flex justify-between items-center mb-4 pb-3 border-b border-slate-200">
+                                    <h2 class="font-outfit font-bold text-base text-slate-900 flex items-center gap-2">
+                                        <svg class="w-5 h-5 text-red-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+                                        Live Speech Transcript
+                                    </h2>
+                                    <span class="text-xs text-slate-500 font-mono">Diarization Active</span>
+                                </div>
+
+                                <TranscriptViewer 
+                                    turns={turns}
+                                    partialText={partialText}
+                                    isRecording={isRecording}
+                                />
+                            </div>
+                        </div>
+
+                        {/* Right Column: React View Tabs & AI Assistants (7 cols) */}
+                        <div class="lg:col-span-7 flex flex-col space-y-4">
+                            
+                            {/* Guideline Follow-Up Questions (Live Missing Info) */}
+                            <div class="glass-panel p-5 rounded-2xl border-amber-300 bg-amber-50/50">
+                                <div class="flex justify-between items-center mb-3">
+                                    <h3 class="font-outfit font-bold text-sm text-amber-900 flex items-center gap-2">
+                                        <svg class="w-4 h-4 text-amber-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                                        Suggested Follow-Up Questions
+                                    </h3>
+                                    <span class="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-200 text-amber-900 uppercase border border-amber-300">ACC/AHA Guidelines</span>
+                                </div>
+                                
+                                <div class="space-y-2 max-h-40 overflow-y-auto">
+                                    {missingInfo.flatMap(m => m.suggested_questions || []).length === 0 ? (
+                                        <p class="text-xs text-slate-500 italic text-center py-2">Follow-up questions will be generated live as symptoms are spoken.</p>
+                                    ) : (
+                                        missingInfo.flatMap(m => m.suggested_questions || []).map((q, idx) => (
+                                            <div key={idx} class="flex items-start gap-3 p-2.5 rounded-lg bg-white border border-slate-200 shadow-sm hover:border-amber-400 transition-all">
+                                                <input type="checkbox" id={`q_${idx}`} class="mt-0.5 accent-red-600 w-4 h-4 cursor-pointer" />
+                                                <label htmlFor={`q_${idx}`} class="text-xs text-slate-800 cursor-pointer">{q}</label>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* View Tab Navigation Bar */}
+                            <div class="glass-panel p-1.5 rounded-xl flex items-center gap-2 bg-slate-100 border-slate-200">
+                                {[
+                                    { id: 'graph', label: '🕸️ Knowledge Graph' },
+                                    { id: 'soap', label: '📋 SOAP Note' },
+                                    { id: 'evidence', label: '🔍 Evidence & Claims' },
+                                ].map(tab => (
+                                    <button
+                                        key={tab.id}
+                                        onClick={() => setActiveTab(tab.id)}
+                                        class={`flex-1 text-xs font-semibold py-2.5 rounded-lg transition-all ${
+                                            activeTab === tab.id 
+                                                ? 'bg-gradient-to-r from-red-600 to-rose-600 text-white shadow-md shadow-red-500/25' 
+                                                : 'text-slate-600 hover:text-slate-900 hover:bg-white'
+                                        }`}
+                                    >
+                                        {tab.label}
+                                    </button>
+                                ))}
+                            </div>
+
+                            {/* Tab Content Panels */}
+                            <div class="glass-panel p-5 rounded-2xl flex-1 flex flex-col min-h-[420px]">
+                                {activeTab === 'graph' && (
+                                    <GraphVisualizer nodes={graphNodes.length > 0 ? graphNodes : entities} relationships={graphRelationships} />
+                                )}
+                                {activeTab === 'soap' && (
+                                    <SOAPViewer 
+                                        transcript={turns.length > 0 ? turns.map(t => t.text).join(' ') : fullTranscript}
+                                        entities={entities}
+                                        riskAnalysis={riskAnalysis}
+                                        missingInfo={missingInfo}
+                                        ragResult={ragResult}
+                                    />
+                                )}
+                                {activeTab === 'evidence' && (
+                                    <EvidenceViewer 
+                                        entities={entities} 
+                                        candidateDiseases={candidateDiseases}
+                                        ragResult={ragResult}
+                                        onRunRAGQuery={runRAGQuery}
+                                        isQueryingRAG={isQueryingRAG}
+                                    />
+                                )}
+                            </div>
+
+                        </div>
+                    </main>
+                </div>
+            );
+        }
+
+        // Render React App
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
     </script>
 </body>
 </html>

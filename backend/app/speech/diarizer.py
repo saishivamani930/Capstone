@@ -1,10 +1,14 @@
 import os
+import warnings
 from functools import lru_cache
 from pathlib import Path
 
 import soundfile as sf
 import torch
 from dotenv import load_dotenv
+
+# Suppress pyannote optional torchcodec warning
+warnings.filterwarnings("ignore", category=UserWarning, module="pyannote.audio")
 from pyannote.audio import Pipeline
 
 

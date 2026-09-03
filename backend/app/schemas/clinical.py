@@ -66,6 +66,7 @@ class ConsultationResult(BaseModel):
     patient_transcript: str
     conversation: list[ConversationTurn]
     medical_nlp: MedicalNLPResult
+    rag_result: Optional[dict] = None
 
 
 class ExtractedEntity(BaseModel):

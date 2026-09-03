@@ -43,10 +43,14 @@ class Neo4jClient:
         MERGE (a)-[r:RELATED_TO {type: rel.relation_type}]->(b)
         """
         
-        with self.driver.session() as session:
-            session.run(query, patient_id=patient_id, entities=entities)
-            if relations:
-                session.run(rel_query, relations=relations)
+        try:
+            with self.driver.session() as session:
+                session.run(query, patient_id=patient_id, entities=entities)
+                if relations:
+                    session.run(rel_query, relations=relations)
+        except Exception as error:
+            print(f"[Neo4j Warning] Database sync skipped (Neo4j unreachable): {error}")
+
 
     def get_patient_symptoms(self, patient_id: str) -> list:
         """

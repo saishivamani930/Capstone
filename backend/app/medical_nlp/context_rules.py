@@ -22,22 +22,34 @@ def extract_context_entities(text: str) -> list[dict]:
 
     for pattern in AGGRAVATING_PATTERNS:
         for match in pattern.finditer(text):
-            factor = match.group("factor").strip()
+            raw_factor = match.group("factor").strip()
 
             factor = re.sub(
                 r"^(?:i|we|the patient)\s+",
                 "",
-                factor,
+                raw_factor,
                 flags=re.IGNORECASE,
             ).strip()
 
-            entities.append({
-                "text": factor,
-                "label": "Aggravating_factor",
-                "start": match.start("factor"),
-                "end": match.end("factor"),
-                "source": "rule",
-                "evidence": match.group().strip(),
-            })
+            # Truncate at clause breaks (e.g. "I ", "and ", "but ", "don't", "take ")
+            clause_split = re.split(
+                r"\s+(?:I|we|they|and|but|don't|does|doesn't|denies|not|take|taking)\b",
+                factor,
+                maxsplit=1,
+                flags=re.IGNORECASE,
+            )
+            clean_factor = clause_split[0].strip()
+
+            if clean_factor:
+                factor_start = match.start("factor")
+                factor_end = factor_start + len(clean_factor)
+                entities.append({
+                    "text": clean_factor,
+                    "label": "Aggravating_factor",
+                    "start": factor_start,
+                    "end": factor_end,
+                    "source": "rule",
+                    "evidence": match.group().strip(),
+                })
 
     return entities

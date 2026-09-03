@@ -1,8 +1,6 @@
-import pytest
+import unittest
 from pydantic import ValidationError
-
 from app.schemas.clinical import ConsultationResult
-
 
 def create_valid_result() -> dict:
     return {
@@ -73,58 +71,58 @@ def create_valid_result() -> dict:
         },
     }
 
+class TestSchema(unittest.TestCase):
+    def test_valid_consultation_result(self):
+        result = ConsultationResult.model_validate(
+            create_valid_result()
+        )
 
-def test_valid_consultation_result():
-    result = ConsultationResult.model_validate(
-        create_valid_result()
-    )
+        self.assertEqual(result.language, "en")
+        self.assertEqual(result.conversation[0].speaker, "DOCTOR")
+        self.assertEqual(result.conversation[1].speaker, "PATIENT")
 
-    assert result.language == "en"
-    assert result.conversation[0].speaker == "DOCTOR"
-    assert result.conversation[1].speaker == "PATIENT"
+        symptom = result.medical_nlp.structured_entities.symptoms[0]
 
-    symptom = result.medical_nlp.structured_entities.symptoms[0]
+        self.assertEqual(symptom.text, "chest pain")
+        self.assertFalse(symptom.negated)
+        self.assertEqual(symptom.assertion, "present")
 
-    assert symptom.text == "chest pain"
-    assert symptom.negated is False
-    assert symptom.assertion == "present"
+    def test_structured_entity_defaults_are_created(self):
+        data = create_valid_result()
 
+        data["medical_nlp"]["structured_entities"] = {}
+        data["medical_nlp"]["clinical_facts"] = {}
 
-def test_structured_entity_defaults_are_created():
-    data = create_valid_result()
+        result = ConsultationResult.model_validate(data)
 
-    data["medical_nlp"]["structured_entities"] = {}
-    data["medical_nlp"]["clinical_facts"] = {}
+        structured = result.medical_nlp.structured_entities
 
-    result = ConsultationResult.model_validate(data)
+        self.assertEqual(structured.symptoms, [])
+        self.assertEqual(structured.diseases, [])
+        self.assertEqual(structured.medications, [])
+        self.assertEqual(structured.negated_entities, [])
 
-    structured = result.medical_nlp.structured_entities
+        self.assertEqual(
+            result.medical_nlp.clinical_facts.symptom_records,
+            []
+        )
 
-    assert structured.symptoms == []
-    assert structured.diseases == []
-    assert structured.medications == []
-    assert structured.negated_entities == []
+    def test_missing_required_conversation_field_fails(self):
+        data = create_valid_result()
 
-    assert (
-        result.medical_nlp.clinical_facts.symptom_records
-        == []
-    )
+        del data["conversation"][0]["speaker"]
 
+        with self.assertRaises(ValidationError):
+            ConsultationResult.model_validate(data)
 
-def test_missing_required_conversation_field_fails():
-    data = create_valid_result()
+    def test_invalid_entity_position_fails(self):
+        data = create_valid_result()
 
-    del data["conversation"][0]["speaker"]
+        entity = data["medical_nlp"]["entities"][0]
+        entity["start"] = "invalid-position"
 
-    with pytest.raises(ValidationError):
-        ConsultationResult.model_validate(data)
+        with self.assertRaises(ValidationError):
+            ConsultationResult.model_validate(data)
 
-
-def test_invalid_entity_position_fails():
-    data = create_valid_result()
-
-    entity = data["medical_nlp"]["entities"][0]
-    entity["start"] = "invalid-position"
-
-    with pytest.raises(ValidationError):
-        ConsultationResult.model_validate(data)
+if __name__ == "__main__":
+    unittest.main()
