@@ -6,6 +6,92 @@ ClinExplain is a state-of-the-art explainable AI clinical consultation assistant
 
 ---
 
+## ⚡ Quick Start & Hassle-Free Local Setup
+
+Follow these simple steps to set up and run ClinExplain locally on **Windows**, **macOS**, or **Linux**.
+
+### 1. System Requirements & Prerequisites
+* **Python**: `3.10` or higher
+* **FFmpeg**: Required by Whisper for audio decoding.
+  * **Windows**: Run `winget install ffmpeg` or `choco install ffmpeg`
+  * **macOS**: Run `brew install ffmpeg`
+  * **Linux (Ubuntu/Debian)**: Run `sudo apt update && sudo apt install ffmpeg`
+* **Microphone**: Standard built-in or external microphone.
+
+---
+
+### 2. Clone Repository & Setup Environment
+
+#### 🔹 Windows (PowerShell / Command Prompt)
+```powershell
+# 1. Clone repository
+git clone https://github.com/saishivamani930/Capstone.git
+cd Capstone
+
+# 2. Navigate to backend directory
+cd backend
+
+# 3. Create virtual environment
+python -m venv clinxpln
+
+# 4. Activate virtual environment
+.\clinxpln\Scripts\activate
+
+# 5. Upgrade pip and install all required dependencies
+python -m pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+#### 🔹 macOS / Linux (Terminal)
+```bash
+# 1. Clone repository
+git clone https://github.com/saishivamani930/Capstone.git
+cd Capstone
+
+# 2. Navigate to backend directory
+cd backend
+
+# 3. Create virtual environment
+python3 -m venv clinxpln
+
+# 4. Activate virtual environment
+source clinxpln/bin/activate
+
+# 5. Upgrade pip and install all required dependencies
+pip install --upgrade pip setuptools wheel
+pip install -r requirements.txt
+```
+
+---
+
+### 3. Launch Backend & Web Dashboard
+
+With the virtual environment activated inside the `backend/` directory, run:
+
+```bash
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Once launched, open your web browser:
+* 🌐 **Web Dashboard UI**: [http://127.0.0.1:8000/](http://127.0.0.1:8000/) *(Automatically serves the full interactive dashboard)*
+* 📚 **Interactive Swagger API Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+> 💡 **Note on Model Download**: On your very first run, HuggingFace will automatically download the BioBERT NER weights (`d4data/biomedical-ner-all`) and SentenceTransformers embedding model (`all-MiniLM-L6-v2`). This happens automatically without manual configuration.
+
+---
+
+### 4. Run Automated Unit Tests
+
+To verify that all modules are working 100% correctly on your local system:
+
+```bash
+# Ensure virtual environment is activated inside backend/
+python -m unittest discover tests
+```
+*Expected Output*: `Ran 10 tests in ~11s - OK`
+
+---
+
 ## 📐 System Architecture & End-to-End Data Flow
 
 ```mermaid
@@ -80,23 +166,9 @@ flowchart TD
 
 ---
 
-## 🔁 Detailed Step-by-Step Data Flow Execution
+## 🛠️ Module & Technology Stack Breakdown
 
-1. **Audio Capture & WebSockets**: The browser records live microphone input in WebM/Opus format via the Web Audio API and streams binary chunks over WebSockets (`ws://127.0.0.1:8000/speech/live`).
-2. **Partial Transcription Workers**: While recording, background threads generate partial Whisper transcripts every 3 seconds to render live STT feedback on the dashboard.
-3. **Diarization & Role Mapping**: When the user clicks **Stop Recording**, Pyannote segments the full audio into timestamped speaker turns. `pipeline.py` assigns Doctor vs. Patient speaker roles and extracts clean patient-only speech.
-4. **Biomedical NLP & Assertion**: Patient speech is passed through BioBERT (`d4data/biomedical-ner-all`) to extract clinical entities (*symptoms, diseases, medications, durations, aggravating factors*). Regex assertion rules mark negated entities (*"no fever"*, *"not allergic to penicillin"*).
-5. **Ontology Linking & Risk Assessment**: Extracted symptom QIDs are looked up via Wikidata SPARQL. The Neuro-Symbolic Engine computes cardiology risk levels (`HIGH`, `MEDIUM`, `LOW`) and generates ACC/AHA follow-up questions for unaddressed red flags.
-6. **WHO Guideline RAG Retrieval**: SentenceTransformers (`all-MiniLM-L6-v2`) converts extracted patient symptoms into dense vector embeddings and queries the FAISS index (`faiss-cpu`) to retrieve top-5 official WHO guideline passages.
-7. **LLM Guideline Synthesis**: The local LLM (or deterministic fallback) synthesizes a concise, evidence-grounded treatment plan for the SOAP Plan Card.
-8. **Symbolic Claim Verification**: `claim_validator.py` deconstructs the LLM summary into atomic numerical BP thresholds and timing window claims, verifies them against raw source chunks, and calculates a **Faithfulness Score %** badge.
-9. **Dashboard Render & Reset**: The complete `ConsultationResult` payload populates the 4-Quadrant SOAP Note, Interactive SVG Knowledge Graph, Cardiology Risk Banner, and Evidence Viewer. Clicking **🔄 New Patient** purges background tasks and resets all states.
-
----
-
-## 🛠️ Module & Technology Breakdown
-
-| Module | Core Files | Technologies & Libraries Used |
+| Module | Key Core Files | Technologies & Libraries Used |
 | :--- | :--- | :--- |
 | **Speech STT & Diarization** | `backend/app/api/speech.py`<br>`backend/app/speech/diarizer.py`<br>`backend/app/speech/pipeline.py` | OpenAI Whisper, PyTorch, `pyannote.audio`, FFmpeg, WebSockets |
 | **Biomedical NLP** | `backend/app/medical_nlp/pipeline.py`<br>`backend/app/medical_nlp/negation.py`<br>`backend/app/medical_nlp/context_rules.py` | BioBERT (`d4data/biomedical-ner-all`), HuggingFace Transformers, Regex Assertion Rules |
@@ -108,34 +180,13 @@ flowchart TD
 
 ---
 
+## 🛠️ Troubleshooting & FAQs
 
-## 🚀 Quick Start Guide
+#### Q1: "FFmpeg not found" error when starting recording?
+* Make sure FFmpeg is installed and added to your system `PATH`. Restart your terminal after installing FFmpeg.
 
-### 1. Prerequisites
-- Python 3.10+
-- Virtual environment (`clinxpln`)
+#### Q2: Microphone permission denied?
+* When you click **Start Consultation**, your browser will request microphone access. Click **Allow**.
 
-### 2. Launch Backend Server
-```powershell
-cd backend
-..\clinxpln\Scripts\python.exe -m uvicorn app.main:app --reload
-```
-* **API Documentation**: `http://127.0.0.1:8000/docs`
-* **Web Dashboard**: `http://127.0.0.1:8000/`
-
-### 3. Run Automated Test Suite
-```powershell
-cd backend
-..\clinxpln\Scripts\python.exe -m uvicorn app.main:app --reload
-# In another terminal:
-..\clinxpln\Scripts\python.exe -m unittest discover tests
-```
-
----
-
-## 🧪 Verification & Testing Status
-
-- **Unit Tests**: All 10 test suites passing (`Ran 10 tests in 11.411s - OK`).
-- **WebSocket Latency**: Audio stop response time optimized from **300s down to ~10s**.
-- **Claim Faithfulness**: 100% verification accuracy on WHO blood pressure guidelines.
-- **Session Isolation**: Instant 1-click **🔄 New Patient** purge and `beforeunload` auto-cleanup verified.
+#### Q3: How to reset patient session data?
+* Click the **`🔄 New Patient`** button in the top header bar, or reload your browser tab. All background tasks and temporary audio buffers will automatically purge.
