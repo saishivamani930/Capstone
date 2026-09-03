@@ -108,15 +108,6 @@ flowchart TD
 
 ---
 
-## ❓ Is `frontend/live-test.html` Needed?
-
-**No, `live-test.html` is NOT needed for the production application.**
-
-* **Reason**: `live-test.html` was a temporary, barebones HTML script created during early backend development to test raw WebSocket audio streaming before the full React UI was built.
-* **Current UI**: The complete, mounted production application is **`frontend/index.html`**, which is served automatically by FastAPI at `http://127.0.0.1:8000/`.
-* **Action**: `live-test.html` can be safely kept as an offline developer utility or deleted.
-
----
 
 ## 🚀 Quick Start Guide
 
