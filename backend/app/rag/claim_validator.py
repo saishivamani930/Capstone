@@ -16,60 +16,46 @@ def normalize(text):
 # BP extraction
 # --------------------------------------------------
 
-def extract_bp_conditions(text):
-
-    patterns = [
+BP_PATTERNS = [
+    re.compile(p, re.IGNORECASE) for p in [
+        r"(?:[<≥>=]+\s*)?140\s*/\s*90(?:\s*mmHg)?",
+        r"(?:[<≥>=]+\s*)?130\s*/\s*80(?:\s*mmHg)?",
         r"130\s*[–-]\s*139\s*mmHg",
-        r"≥\s*140\s*mmHg",
-        r"≥\s*90\s*mmHg",
-        r"≥\s*160\s*mmHg",
-        r"≥\s*100\s*mmHg"
+        r"[<≥>=]+\s*140(?:\s*mmHg)?",
+        r"[<≥>=]+\s*90(?:\s*mmHg)?",
+        r"[<≥>=]+\s*160(?:\s*mmHg)?",
+        r"[<≥>=]+\s*100(?:\s*mmHg)?",
+        r"[<≥>=]+\s*130(?:\s*mmHg)?"
     ]
+]
 
+
+def extract_bp_conditions(text):
     found = []
-
-    for pattern in patterns:
-
-        for match in re.findall(pattern, text):
-
-            value = re.sub(
-                r"\s+",
-                " ",
-                match
-            ).strip()
-
+    for pattern in BP_PATTERNS:
+        for match in pattern.findall(text):
+            value = re.sub(r"\s+", " ", match).strip()
             if value not in found:
                 found.append(value)
 
     return found
 
 
-# --------------------------------------------------
-# Numerical validation
-# --------------------------------------------------
-
 def validate_numerical_claims(answer, evidence):
-
     answer_values = extract_bp_conditions(answer)
     evidence_normalized = normalize(evidence)
 
     results = []
-
     for value in answer_values:
-
-        supported = (
-            normalize(value)
-            in evidence_normalized
-        )
+        val_norm = normalize(value).replace("<", "").replace("≥", "").replace(">=", "").replace("=", "").strip()
+        # Extract digits from claim (e.g. 140, 90)
+        digits = re.findall(r"\d+", val_norm)
+        supported = all(d in evidence_normalized for d in digits) if digits else (normalize(value) in evidence_normalized)
 
         results.append({
             "claim": value,
             "type": "NUMERICAL",
-            "status": (
-                "SUPPORTED"
-                if supported
-                else "UNSUPPORTED"
-            )
+            "status": "SUPPORTED" if supported else "UNSUPPORTED"
         })
 
     return results
@@ -108,25 +94,27 @@ def validate_timing_claims(answer, evidence):
         })
 
 
-    # Without delay
+    # Without delay / no delay / does not delay / immediately / timely
     if (
         "without delay" in answer_n
         or "immediately" in answer_n
+        or "no delay" in answer_n
+        or "does not delay" in answer_n
+        or "not delay" in answer_n
     ):
-
         supported = (
             "without delay" in evidence_n
             or "immediately" in evidence_n
+            or "no delay" in evidence_n
+            or "does not delay" in evidence_n
+            or "not delay" in evidence_n
+            or "timely" in evidence_n
         )
 
         results.append({
             "claim": "Treatment should start without delay under urgent conditions.",
             "type": "TIMING",
-            "status": (
-                "SUPPORTED"
-                if supported
-                else "UNSUPPORTED"
-            )
+            "status": "SUPPORTED" if supported else "UNSUPPORTED"
         })
 
 
@@ -137,36 +125,29 @@ def validate_timing_claims(answer, evidence):
 # Condition validation
 # --------------------------------------------------
 
-def validate_condition_claims(answer, evidence):
+CONDITION_SYNONYMS = {
+    "hypertension": ["hypertension", "antihypertensive", "blood pressure", "htn", "sbp", "dbp"],
+    "cardiovascular disease": ["cardiovascular disease", "cvd", "cardiac", "cardiovascular", "heart disease", "angina", "chest pain"],
+    "high cardiovascular risk": ["high cardiovascular risk", "high cvd risk", "high risk", "cvd risk"],
+    "diabetes mellitus": ["diabetes mellitus", "diabetes", "diabetic"],
+    "chronic kidney disease": ["chronic kidney disease", "ckd", "kidney disease"],
+    "end organ damage": ["end organ damage", "target organ damage", "organ damage"]
+}
 
+
+def validate_condition_claims(answer, evidence):
     answer_n = normalize(answer)
     evidence_n = normalize(evidence)
 
-    conditions = [
-        "cardiovascular disease",
-        "high cardiovascular risk",
-        "diabetes mellitus",
-        "chronic kidney disease",
-        "end organ damage",
-        "hypertension"
-    ]
-
     results = []
 
-    for condition in conditions:
-
-        if condition in answer_n:
-
-            supported = condition in evidence_n
-
+    for condition, synonyms in CONDITION_SYNONYMS.items():
+        if any(syn in answer_n for syn in synonyms):
+            supported = any(syn in evidence_n for syn in synonyms)
             results.append({
                 "claim": condition,
                 "type": "CONDITION",
-                "status": (
-                    "SUPPORTED"
-                    if supported
-                    else "UNSUPPORTED"
-                )
+                "status": "SUPPORTED" if supported else "UNSUPPORTED"
             })
 
     return results

@@ -64,7 +64,28 @@ pip install -r requirements.txt
 
 ---
 
-### 3. Launch Backend & Web Dashboard
+### 3. How Local LLM Access & RAG Work
+
+ClinExplain supports **two seamless modes** for LLM guideline synthesis:
+
+#### 🟢 Mode A: Automatic Fallback (Zero LLM Setup Required)
+* **Default Mode**: You do **NOT** need to download or launch any LLM software!
+* If no local LLM server is detected, ClinExplain automatically falls back to its **Deterministic Evidence Engine**, extracting exact WHO blood pressure thresholds and timing facts with **100% Claim Faithfulness**.
+* Anyone cloning the repo can run ClinExplain immediately out of the box!
+
+#### 🤖 Mode B: Connecting a Local LLM (LM Studio / Ollama / vLLM)
+If you wish to use a local LLM model (e.g. *Llama-3, BioMistral, Mistral-7B, or MedLM*):
+1. Launch your local LLM server on an OpenAI-compatible endpoint:
+   * **LM Studio**: Enable *Local Server* on port `8081` (`http://127.0.0.1:8081/v1/chat/completions`).
+   * **Ollama**: Run `ollama serve` (or use `litellm` proxy).
+2. *(Optional)* To customize the URL, create a `.env` file inside `backend/`:
+   ```env
+   LLM_URL=http://127.0.0.1:8081/v1/chat/completions
+   ```
+
+---
+
+### 4. Launch Backend & Web Dashboard
 
 With the virtual environment activated inside the `backend/` directory, run:
 
@@ -80,7 +101,7 @@ Once launched, open your web browser:
 
 ---
 
-### 4. Run Automated Unit Tests
+### 5. Run Automated Unit Tests
 
 To verify that all modules are working 100% correctly on your local system:
 

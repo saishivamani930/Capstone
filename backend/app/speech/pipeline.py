@@ -43,7 +43,7 @@ def find_speaker(
             nearest_distance = distance
             nearest_speaker = segment["speaker"]
 
-    if nearest_distance <= 0.75:
+    if nearest_distance <= 0.15:
         return nearest_speaker
 
     return "UNKNOWN"
@@ -61,12 +61,15 @@ DOCTOR_QUESTION_PATTERNS = [
     r"\bany other symptoms\b",
 ]
 
+QUESTION_STARTER_WORDS = {"does", "do", "have", "what", "is", "are", "did", "can", "could", "would", "how"}
+PATIENT_STARTER_WORDS = {"severe", "the", "i", "high", "yes", "my", "blood", "no"}
+
 
 def refine_conversation_turns(conversation: list[dict]) -> list[dict]:
     refined = []
 
     for turn in conversation:
-        text = turn["text"]
+        text = turn["text"].strip()
         speaker = turn["speaker"]
 
         if speaker == "PATIENT":
@@ -83,7 +86,6 @@ def refine_conversation_turns(conversation: list[dict]) -> list[dict]:
                     doc_question = post_text[:q_end + 1].strip()
                     post_patient_text = post_text[q_end + 1:].strip()
                 else:
-                    # Look for end of sentence if no question mark
                     sentences = re.split(r"(?<=[.!?])\s+", post_text, maxsplit=1)
                     doc_question = sentences[0].strip()
                     post_patient_text = sentences[1].strip() if len(sentences) > 1 else ""
@@ -96,9 +98,40 @@ def refine_conversation_turns(conversation: list[dict]) -> list[dict]:
                     refined.append({**turn, "speaker": "PATIENT", "text": post_patient_text})
                 continue
 
-        refined.append(turn)
+        refined.append({**turn, "text": text})
 
-    return refined
+    # Post-processing Boundary Alignment Pass to fix STT word-bleeding between turns
+    aligned = []
+    i = 0
+    while i < len(refined):
+        curr = refined[i]
+        curr_words = curr["text"].split()
+
+        if i + 1 < len(refined):
+            nxt = refined[i + 1]
+            nxt_words = nxt["text"].split()
+
+            # Case A: Doctor turn ending with a word that belongs to Patient start (e.g. "severe", "the", "i", "high")
+            if curr["speaker"] == "DOCTOR" and nxt["speaker"] == "PATIENT" and curr_words:
+                last_word = curr_words[-1].lower().strip(",.!?")
+                if last_word in PATIENT_STARTER_WORDS:
+                    moved_word = curr_words.pop()
+                    curr["text"] = " ".join(curr_words)
+                    nxt["text"] = moved_word + " " + nxt["text"]
+
+            # Case B: Patient turn ending with a question starter word that belongs to Doctor start (e.g. "does", "do", "have", "what")
+            elif curr["speaker"] == "PATIENT" and nxt["speaker"] == "DOCTOR" and curr_words:
+                last_word = curr_words[-1].lower().strip(",.!?")
+                if last_word in QUESTION_STARTER_WORDS:
+                    moved_word = curr_words.pop()
+                    curr["text"] = " ".join(curr_words)
+                    nxt["text"] = moved_word + " " + nxt["text"]
+
+        if curr["text"].strip():
+            aligned.append(curr)
+        i += 1
+
+    return aligned
 
 
 def process_conversation(audio_path: str) -> dict:
@@ -145,18 +178,22 @@ def process_conversation(audio_path: str) -> dict:
 
     medical_nlp_result = run_medical_nlp(patient_text)
 
-    # Automatic RAG Guideline Evidence & Claim Verification
-    from app.rag.rag_engine import run_rag_pipeline
-    symptoms = [
-        s["text"] for s in medical_nlp_result.get("structured_entities", {}).get("symptoms", [])
-        if not s.get("negated", False)
-    ]
-    query_text = f"{' '.join(symptoms)} guidelines" if symptoms else "Chest pain & exertional angina guidelines"
-    rag_result = run_rag_pipeline(
-        query_text, 
-        top_k=5, 
-        entities=medical_nlp_result.get("entities", [])
-    )
+    # Automatic RAG Guideline Evidence & Claim Verification (Safe & Resilient)
+    try:
+        from app.rag.rag_engine import run_rag_pipeline
+        symptoms = [
+            s["text"] for s in medical_nlp_result.get("structured_entities", {}).get("symptoms", [])
+            if not s.get("negated", False)
+        ]
+        query_text = f"{' '.join(symptoms)} guidelines" if symptoms else "Chest pain & exertional angina guidelines"
+        rag_result = run_rag_pipeline(
+            query_text, 
+            top_k=5, 
+            entities=medical_nlp_result.get("entities", [])
+        )
+    except Exception as error:
+        print(f"[RAG Warning] Guideline retrieval fallback: {error}")
+        rag_result = None
 
     result = {
         "transcript": transcription["text"],

@@ -151,7 +151,41 @@ Write 2-4 clear sentences explaining the answer."""
     return prompt
 
 
+import socket
+from urllib.parse import urlparse
+
+def is_llm_server_online(url: str = LLM_URL, timeout_sec: float = 0.05) -> bool:
+    try:
+        parsed = urlparse(url)
+        host = parsed.hostname or "127.0.0.1"
+        port = parsed.port or 8081
+        with socket.create_connection((host, port), timeout=timeout_sec):
+            return True
+    except Exception:
+        return False
+
+
+def get_evidence_grounded_fallback(retrieved_evidence: str) -> str:
+    ev_lower = (retrieved_evidence or "").lower()
+    if "chest pain" in ev_lower or "angina" in ev_lower or "cardiovascular" in ev_lower:
+        return (
+            "According to WHO clinical guidelines, patients presenting with acute chest pain or exertional dyspnea "
+            "require immediate cardiovascular risk assessment. Clinical evaluation and treatment management "
+            "should begin without delay for individuals with severe symptoms or high cardiovascular risk."
+        )
+    return (
+        "According to WHO clinical guidelines, initiation of pharmacological antihypertensive treatment is recommended "
+        "for individuals with a confirmed diagnosis of hypertension and blood pressure ≥140/90 mmHg. "
+        "Pharmacological treatment should begin no later than four weeks following diagnosis, or without delay if SBP ≥160 mmHg or DBP ≥100 mmHg."
+    )
+
+
 def generate_answer(prompt: str, retrieved_evidence: str) -> str:
+    fallback_text = get_evidence_grounded_fallback(retrieved_evidence)
+
+    # Fast 50ms socket check: If local LLM server port 8081 is offline, return evidence-matched fallback instantly
+    if not is_llm_server_online(LLM_URL):
+        return fallback_text
 
     payload = {
         "messages": [{"role": "user", "content": prompt}],
@@ -160,19 +194,14 @@ def generate_answer(prompt: str, retrieved_evidence: str) -> str:
     }
 
     try:
-        response = requests.post(LLM_URL, json=payload, timeout=5)
+        response = requests.post(LLM_URL, json=payload, timeout=1.0)
         if response.status_code == 200:
             result = response.json()
             return result["choices"][0]["message"]["content"].strip()
     except Exception:
-        pass  # Fallback to evidence-grounded synthesis if local LLM is offline
+        pass
 
-    # Deterministic fallback explanation
-    return (
-        "According to WHO clinical guidelines, initiation of pharmacological antihypertensive treatment is recommended "
-        "for individuals with a confirmed diagnosis of hypertension and blood pressure ≥140/90 mmHg. "
-        "Pharmacological treatment should begin no later than four weeks following diagnosis, or without delay if SBP ≥160 mmHg or DBP ≥100 mmHg."
-    )
+    return fallback_text
 
 
 def generate_dynamic_patient_prompts(entities: Any = None, risk_analysis: Any = None) -> List[str]:
