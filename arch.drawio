@@ -1,0 +1,181 @@
+<mxfile host="app.diagrams.net" modified="2026-09-04T12:00:00.000Z" agent="ClinExplain Architecture" version="24.7.17">
+  <diagram name="ClinExplain Architecture" id="clinexplain-architecture">
+    <mxGraphModel dx="1422" dy="794" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1169" pageHeight="827" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+
+        <!-- TITLE -->
+        <mxCell id="title" value="ClinExplain: Real-Time Neuro-Symbolic Medical AI Architecture"
+          style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;fontSize=20;fontStyle=1;fontColor=#1f2937;"
+          vertex="1" parent="1">
+          <mxGeometry x="300" y="20" width="570" height="40" as="geometry"/>
+        </mxCell>
+
+        <!-- FRONTEND -->
+        <mxCell id="frontend" value="&lt;b&gt;REACT 18 FRONTEND&lt;/b&gt;&lt;br&gt;&lt;br&gt;Web Audio API&lt;br&gt;16 kHz PCM Audio&lt;br&gt;Real-Time Consultation"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f1fb;strokeColor=#4a78a8;strokeWidth=2;fontSize=12;fontColor=#1f2937;spacing=8;"
+          vertex="1" parent="1">
+          <mxGeometry x="400" y="85" width="370" height="105" as="geometry"/>
+        </mxCell>
+
+        <!-- WEBSOCKET -->
+        <mxCell id="websocket" value="WebSocket&lt;br&gt;Streaming"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#6b7280;strokeWidth=1.5;fontSize=11;fontStyle=1;"
+          vertex="1" parent="1">
+          <mxGeometry x="455" y="215" width="260" height="55" as="geometry"/>
+        </mxCell>
+
+        <!-- FASTAPI -->
+        <mxCell id="fastapi" value="&lt;b&gt;FASTAPI BACKEND&lt;/b&gt;&lt;br&gt;&lt;br&gt;Streaming Gateway&lt;br&gt;Processing Orchestration"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf6ee;strokeColor=#4b8b62;strokeWidth=2;fontSize=12;fontColor=#1f2937;spacing=8;"
+          vertex="1" parent="1">
+          <mxGeometry x="400" y="295" width="370" height="100" as="geometry"/>
+        </mxCell>
+
+        <!-- SPEECH PROCESSING GROUP -->
+        <mxCell id="speechgroup" value="SPEECH PROCESSING"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8fafc;strokeColor=#64748b;strokeWidth=2;fontSize=14;fontStyle=1;fontColor=#334155;verticalAlign=top;align=left;spacingTop=8;spacingLeft=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="120" y="425" width="930" height="190" as="geometry"/>
+        </mxCell>
+
+        <!-- WHISPER -->
+        <mxCell id="whisper" value="&lt;b&gt;faster-whisper&lt;/b&gt;&lt;br&gt;&lt;br&gt;Automatic Speech Recognition&lt;br&gt;Word-Level Timestamps"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5ff;strokeColor=#5b83b4;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="155" y="480" width="255" height="95" as="geometry"/>
+        </mxCell>
+
+        <!-- PYANNOTE -->
+        <mxCell id="pyannote" value="&lt;b&gt;pyannote.audio&lt;/b&gt;&lt;br&gt;&lt;br&gt;Speaker Diarization&lt;br&gt;Speaker Segments"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5ff;strokeColor=#5b83b4;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="455" y="480" width="255" height="95" as="geometry"/>
+        </mxCell>
+
+        <!-- ALIGNMENT -->
+        <mxCell id="alignment" value="&lt;b&gt;Word--Speaker Alignment&lt;/b&gt;&lt;br&gt;&lt;br&gt;Temporal Threshold: τ = 150 ms&lt;br&gt;Boundary Word Migration"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7e6;strokeColor=#c58a32;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="755" y="480" width="255" height="95" as="geometry"/>
+        </mxCell>
+
+        <!-- NLP -->
+        <mxCell id="nlp" value="&lt;b&gt;BIOMEDICAL NLP&lt;/b&gt;&lt;br&gt;&lt;br&gt;&lt;b&gt;BioBERT NER&lt;/b&gt;&lt;br&gt;Symptoms | Diseases | Medications&lt;br&gt;Allergies | Duration | Severity&lt;br&gt;&lt;br&gt;Assertion Detection: Present / Ruled-Out"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5edfb;strokeColor=#8064a2;strokeWidth=2;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="315" y="650" width="470" height="135" as="geometry"/>
+        </mxCell>
+
+        <!-- SYMBOLIC LAYER -->
+        <mxCell id="symbolicgroup" value="NEURO-SYMBOLIC REASONING LAYER"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#475569;strokeWidth=2;fontSize=14;fontStyle=1;fontColor=#334155;verticalAlign=top;align=left;spacingTop=8;spacingLeft=12;"
+          vertex="1" parent="1">
+          <mxGeometry x="90" y="825" width="990" height="245" as="geometry"/>
+        </mxCell>
+
+        <!-- WIKIDATA -->
+        <mxCell id="wikidata" value="&lt;b&gt;WIKIDATA&lt;/b&gt;&lt;br&gt;&lt;br&gt;SPARQL Entity Linking&lt;br&gt;Biomedical QIDs&lt;br&gt;wdt:P780"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f3f4f6;strokeColor=#6b7280;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="125" y="885" width="250" height="105" as="geometry"/>
+        </mxCell>
+
+        <!-- NEO4J -->
+        <mxCell id="neo4j" value="&lt;b&gt;NEO4J KNOWLEDGE GRAPH&lt;/b&gt;&lt;br&gt;&lt;br&gt;Clinical Entities&lt;br&gt;Relationships &amp;amp; Graph Triples&lt;br&gt;Graph Visualization"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eaf6ee;strokeColor=#4b8b62;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="400" y="885" width="250" height="105" as="geometry"/>
+        </mxCell>
+
+        <!-- CLINICAL RULES -->
+        <mxCell id="rules" value="&lt;b&gt;CLINICAL REASONING&lt;/b&gt;&lt;br&gt;&lt;br&gt;ACC/AHA Rules&lt;br&gt;Cardiovascular Risk Logic&lt;br&gt;Deterministic Decisions"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff7e6;strokeColor=#c58a32;strokeWidth=1.5;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="675" y="885" width="250" height="105" as="geometry"/>
+        </mxCell>
+
+        <!-- RAG -->
+        <mxCell id="rag" value="&lt;b&gt;WHO GUIDELINE RAG&lt;/b&gt;&lt;br&gt;&lt;br&gt;WHO Clinical Guidelines&lt;br&gt;Document Chunking&lt;br&gt;FAISS Vector Retrieval&lt;br&gt;Top-5 Evidence Chunks"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#eef5ff;strokeColor=#5b83b4;strokeWidth=2;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="235" y="1110" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- CLAIM VERIFICATION -->
+        <mxCell id="verification" value="&lt;b&gt;SYMBOLIC CLAIM VERIFICATION ENGINE&lt;/b&gt;&lt;br&gt;&lt;br&gt;Numerical Claims&lt;br&gt;Timing Claims&lt;br&gt;Condition Claims&lt;br&gt;&lt;br&gt;Evidence Matching &amp;rarr; Faithfulness Score"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fbeaea;strokeColor=#a64b4b;strokeWidth=2;fontSize=11;fontColor=#1f2937;spacing=7;"
+          vertex="1" parent="1">
+          <mxGeometry x="635" y="1110" width="300" height="120" as="geometry"/>
+        </mxCell>
+
+        <!-- OUTPUT -->
+        <mxCell id="output" value="&lt;b&gt;VERIFIED CLINICAL OUTPUT&lt;/b&gt;&lt;br&gt;&lt;br&gt;Evidence-Grounded Summary&lt;br&gt;Clinical Entities + Graph&lt;br&gt;Verified Claims"
+          style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f1fb;strokeColor=#4a78a8;strokeWidth=2;fontSize=12;fontColor=#1f2937;spacing=8;"
+          vertex="1" parent="1">
+          <mxGeometry x="385" y="1280" width="400" height="110" as="geometry"/>
+        </mxCell>
+
+        <!-- EDGES -->
+
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="frontend" target="websocket">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="websocket" target="fastapi">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="fastapi" target="whisper">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="fastapi" target="pyannote">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="whisper" target="alignment">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="pyannote" target="alignment">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="alignment" target="nlp">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="nlp" target="wikidata">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="nlp" target="neo4j">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="nlp" target="rules">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="neo4j" target="rag">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="rules" target="rag">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="rag" target="verification">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;endArrow=block;strokeWidth=2;strokeColor=#475569;" edge="1" parent="1" source="verification" target="output">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

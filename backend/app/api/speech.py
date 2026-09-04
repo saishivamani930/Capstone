@@ -537,7 +537,7 @@ async def live_audio(websocket: WebSocket):
             await asyncio.sleep(0.2)
             break
 
-    except WebSocketDisconnect:
+    except (WebSocketDisconnect, asyncio.CancelledError, KeyboardInterrupt):
         pass
 
     except Exception as error:

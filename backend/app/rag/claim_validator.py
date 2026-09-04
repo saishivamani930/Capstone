@@ -94,7 +94,7 @@ def validate_timing_claims(answer, evidence):
         })
 
 
-    # Without delay / no delay / does not delay / immediately / timely
+    # Without delay / no delay / does not delay / immediately / timely / promptly / immediate
     if (
         "without delay" in answer_n
         or "immediately" in answer_n
@@ -105,10 +105,13 @@ def validate_timing_claims(answer, evidence):
         supported = (
             "without delay" in evidence_n
             or "immediately" in evidence_n
+            or "immediate" in evidence_n
+            or "promptly" in evidence_n
             or "no delay" in evidence_n
             or "does not delay" in evidence_n
             or "not delay" in evidence_n
             or "timely" in evidence_n
+            or "urgent" in evidence_n
         )
 
         results.append({
